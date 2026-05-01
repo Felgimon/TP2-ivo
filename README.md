@@ -34,17 +34,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-Idea: Estamos en el framework de React en Next.js. El proyecto se trata sobre un dashboard que te permita elegir ciertos componentes de pc para poder crear tu pc ideal. Deberían haber cuentas en las que incias sesión y puedas guardar las pcs que haces. Habría una base de datos o una API con los distintos componentes de pc que hay. Me gustaría que visualmente sea muy simple pero que las transiciones sean deslumbrantes. He visto que se puede hacer con un modelo de blender unas transiciones profesionales e inovadores, yo busco algo así. Investiga que se puede hacer con React que llegue a ese nivel. Intenta no complejisar código. Fijate si hay alternativas que funcionen, que se vean bien y que sean simples y aplicalas. Yo estaba pensando que cuando seleccionas el componente, detras del selector se vea un modelo de PC de fondo que segun los componentes que seleccionas aparezca dentro del modelo de PC ese componente aparecer. 
-
-Los posibles componentes para elegir la PC son:
-
--Gabinete
--Memoria RAM
--DIsco (SSD o Rígido)
--Fuente de alimentación
--Disipador
--Tarjeta gráfica
--Procesador
--Motherboard
