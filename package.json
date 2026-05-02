@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "node scripts/optimize-models.mjs",
     "build": "next build",
+    "prebuild": "node scripts/optimize-models.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "optimize-models": "node scripts/optimize-models.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.0.3",
@@ -20,6 +23,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.3.0",
+    "@gltf-transform/functions": "^4.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

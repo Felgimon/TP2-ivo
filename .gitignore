@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cache local del optimizador de modelos (no se versiona, es por máquina)
+/scripts/.gltf-optimized-cache.json
