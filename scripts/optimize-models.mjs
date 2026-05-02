@@ -32,6 +32,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { NodeIO } from "@gltf-transform/core";
+import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { dedup, prune, weld, resample } from "@gltf-transform/functions";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -82,7 +83,11 @@ function fmtKB(bytes) {
 }
 
 async function optimizeBuffer(inputPath) {
-  const io = new NodeIO();
+  // Registramos TODAS las extensiones glTF estándar (KHR / EXT) así
+  // gltf-transform puede leer modelos que las usen (KHR_texture_transform,
+  // KHR_materials_clearcoat, etc.). Sin esto, el optimizer falla con
+  // "Missing required extension" en muchos modelos modernos.
+  const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
   const doc = await io.read(inputPath);
   await doc.transform(
     dedup(),

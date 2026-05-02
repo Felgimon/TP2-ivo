@@ -1,76 +1,109 @@
 // Catálogo de componentes disponibles en el builder.
 // Por ahora vive en un archivo TS, pero está pensado para que más adelante
 // lo reemplace una API o una base de datos sin tocar el resto del código.
-// La UI consume estos datos a través de helpers como `getComponentsByCategory`.
+//
+// Solo incluimos componentes que tienen un modelo 3D real disponible en
+// `public/models/<categoria>/<modelId>.glb`. Para `disipador` y `fuente`
+// no tenemos .glb propios todavía, así que listamos opciones que usan
+// los modelos placeholder hechos a mano (geometrías procedurales).
 
 import type { PCComponent, PCCategory } from "@/types";
 
-// Lista plana de todos los componentes. Cada uno tiene una categoría
-// y un id único. Los que tienen `modelId` van a usar un modelo 3D
-// específico; los que no, caen en el modelo por default de su categoría.
 export const COMPONENTS: PCComponent[] = [
-  // ---------- GABINETES ----------
-  {
-    id: "gab-nzxt-h7",
-    category: "gabinete",
-    name: "NZXT H7 Flow",
-    brand: "NZXT",
-    price: 180,
-    modelId: "gab-glass-white",
-    specs: { Tipo: "Mid-tower", "Panel lateral": "Vidrio templado" },
-  },
+  // ---------- GABINETES (4 modelos reales) ----------
   {
     id: "gab-corsair-4000d",
     category: "gabinete",
     name: "Corsair 4000D Airflow",
     brand: "Corsair",
     price: 105,
+    modelId: "gab-corsair-4000d",
     specs: { Tipo: "Mid-tower", "Panel lateral": "Vidrio templado" },
   },
   {
-    id: "gab-lianli-o11",
+    id: "gab-fractal-meshify-c",
     category: "gabinete",
-    name: "Lian Li O11 Dynamic",
-    brand: "Lian Li",
-    price: 170,
-    modelId: "gab-glass-black",
-    specs: { Tipo: "Mid-tower premium", "Panel lateral": "Doble vidrio" },
+    name: "Fractal Design Meshify C",
+    brand: "Fractal Design",
+    price: 95,
+    modelId: "gab-fractal-meshify-c",
+    specs: { Tipo: "Mid-tower compacto", "Panel frontal": "Mesh" },
+  },
+  {
+    id: "gab-ncase-m1",
+    category: "gabinete",
+    name: "NCase M1",
+    brand: "NCase",
+    price: 220,
+    modelId: "gab-ncase-m1",
+    specs: { Tipo: "Mini-ITX SFF", "Volumen": "12.6L" },
+  },
+  {
+    id: "gab-nightshark",
+    category: "gabinete",
+    name: "Nightshark",
+    brand: "Custom",
+    price: 130,
+    modelId: "gab-nightshark",
+    specs: { Tipo: "Mid-tower", Estilo: "Gaming RGB" },
   },
 
-  // ---------- MOTHERBOARDS ----------
+  // ---------- MOTHERBOARDS (4 modelos reales) ----------
   {
-    id: "mb-asus-rog-b650",
+    id: "mb-aorus-b550-elite",
     category: "motherboard",
-    name: "ASUS ROG Strix B650-A",
+    name: "Gigabyte B550 AORUS Elite V2",
+    brand: "Gigabyte",
+    price: 170,
+    modelId: "mb-aorus-b550-elite",
+    specs: { Socket: "AM4", Formato: "ATX" },
+  },
+  {
+    id: "mb-asus-b550-strix",
+    category: "motherboard",
+    name: "ASUS ROG Strix B550-F Gaming",
     brand: "ASUS",
-    price: 240,
-    specs: { Socket: "AM5", Formato: "ATX" },
+    price: 200,
+    modelId: "mb-asus-b550-strix",
+    specs: { Socket: "AM4", Formato: "ATX" },
   },
   {
     id: "mb-msi-z790",
     category: "motherboard",
-    name: "MSI MAG Z790 Tomahawk",
+    name: "MSI Z790",
     brand: "MSI",
-    price: 260,
+    price: 230,
+    modelId: "mb-msi-z790",
     specs: { Socket: "LGA1700", Formato: "ATX" },
   },
   {
-    id: "mb-gigabyte-x670",
+    id: "mb-msi-b450-tomahawk",
     category: "motherboard",
-    name: "Gigabyte X670 Aorus",
-    brand: "Gigabyte",
-    price: 300,
-    specs: { Socket: "AM5", Formato: "ATX" },
+    name: "MSI B450 Tomahawk Max",
+    brand: "MSI",
+    price: 130,
+    modelId: "mb-msi-b450-tomahawk",
+    specs: { Socket: "AM4", Formato: "ATX" },
   },
 
-  // ---------- CPUs ----------
+  // ---------- CPUs (8 modelos reales) ----------
   {
     id: "cpu-r5-7600",
     category: "cpu",
     name: "AMD Ryzen 5 7600",
     brand: "AMD",
     price: 220,
-    specs: { Núcleos: "6", "Frecuencia base": "3.8 GHz" },
+    modelId: "cpu-r5-7600",
+    specs: { Núcleos: "6", "Frecuencia base": "3.8 GHz", Socket: "AM5" },
+  },
+  {
+    id: "cpu-r7-5800x",
+    category: "cpu",
+    name: "AMD Ryzen 7 5800X",
+    brand: "AMD",
+    price: 250,
+    modelId: "cpu-r7-5800x",
+    specs: { Núcleos: "8", "Frecuencia base": "3.8 GHz", Socket: "AM4" },
   },
   {
     id: "cpu-r7-7800x3d",
@@ -78,8 +111,35 @@ export const COMPONENTS: PCComponent[] = [
     name: "AMD Ryzen 7 7800X3D",
     brand: "AMD",
     price: 380,
-    modelId: "cpu-amd-premium",
-    specs: { Núcleos: "8", "Caché 3D": "Sí" },
+    modelId: "cpu-r7-7800x3d",
+    specs: { Núcleos: "8", "Caché 3D": "Sí", Socket: "AM5" },
+  },
+  {
+    id: "cpu-r9-9950x3d",
+    category: "cpu",
+    name: "AMD Ryzen 9 9950X3D",
+    brand: "AMD",
+    price: 700,
+    modelId: "cpu-r9-9950x3d",
+    specs: { Núcleos: "16", "Caché 3D": "Sí", Socket: "AM5" },
+  },
+  {
+    id: "cpu-r9-7950x3d",
+    category: "cpu",
+    name: "AMD Ryzen 9 7950X3D",
+    brand: "AMD",
+    price: 600,
+    modelId: "cpu-r9-7950x3d",
+    specs: { Núcleos: "16", "Caché 3D": "Sí", Socket: "AM5" },
+  },
+  {
+    id: "cpu-i5-13600k",
+    category: "cpu",
+    name: "Intel Core i5-13600K",
+    brand: "Intel",
+    price: 320,
+    modelId: "cpu-i5-13600k",
+    specs: { Núcleos: "14", "Frecuencia turbo": "5.1 GHz", Socket: "LGA1700" },
   },
   {
     id: "cpu-i7-14700k",
@@ -87,23 +147,35 @@ export const COMPONENTS: PCComponent[] = [
     name: "Intel Core i7-14700K",
     brand: "Intel",
     price: 410,
-    modelId: "cpu-intel-premium",
-    specs: { Núcleos: "20", "Frecuencia turbo": "5.6 GHz" },
+    modelId: "cpu-i7-14700k",
+    specs: { Núcleos: "20", "Frecuencia turbo": "5.6 GHz", Socket: "LGA1700" },
+  },
+  {
+    id: "cpu-i9-14900k",
+    category: "cpu",
+    name: "Intel Core i9-14900K",
+    brand: "Intel",
+    price: 590,
+    modelId: "cpu-i9-14900k",
+    specs: { Núcleos: "24", "Frecuencia turbo": "6.0 GHz", Socket: "LGA1700" },
   },
 
-  // ---------- DISIPADORES ----------
+  // ---------- DISIPADORES (placeholders, no tenemos .glb propio) ----------
+  // Usamos los modelos procedurales hechos a mano hasta conseguir
+  // archivos .glb reales para esta categoría.
   {
-    id: "cool-hyper212",
+    id: "cool-default-air",
     category: "disipador",
-    name: "Cooler Master Hyper 212",
-    brand: "Cooler Master",
+    name: "Cooler de aire genérico",
+    brand: "Genérico",
     price: 35,
-    specs: { Tipo: "Aire" },
+    // Sin modelId → cae al DefaultDisipador (cooler de torre placeholder).
+    specs: { Tipo: "Aire (single tower)" },
   },
   {
     id: "cool-noctua-d15",
     category: "disipador",
-    name: "Noctua NH-D15",
+    name: "Noctua NH-D15 (placeholder)",
     brand: "Noctua",
     price: 110,
     modelId: "cool-noctua",
@@ -112,21 +184,40 @@ export const COMPONENTS: PCComponent[] = [
   {
     id: "cool-aio-360",
     category: "disipador",
-    name: "Corsair iCUE H150i 360mm",
-    brand: "Corsair",
+    name: "AIO 360mm RGB (placeholder)",
+    brand: "Genérico",
     price: 200,
     modelId: "cool-aio",
     specs: { Tipo: "Líquida AIO 360mm" },
   },
 
-  // ---------- GPUs ----------
+  // ---------- GPUs (7 modelos reales) ----------
   {
-    id: "gpu-rtx-3060",
+    id: "gpu-gtx-1660",
     category: "gpu",
-    name: "NVIDIA RTX 3060",
+    name: "Gigabyte GeForce GTX 1660",
+    brand: "Gigabyte",
+    price: 200,
+    modelId: "gpu-gtx-1660",
+    specs: { VRAM: "6 GB GDDR5" },
+  },
+  {
+    id: "gpu-rtx-2080-fe",
+    category: "gpu",
+    name: "NVIDIA RTX 2080 Founders Edition",
     brand: "NVIDIA",
-    price: 290,
-    specs: { VRAM: "12 GB" },
+    price: 500,
+    modelId: "gpu-rtx-2080-fe",
+    specs: { VRAM: "8 GB GDDR6" },
+  },
+  {
+    id: "gpu-rtx-3080-fe",
+    category: "gpu",
+    name: "NVIDIA RTX 3080 Founders Edition",
+    brand: "NVIDIA",
+    price: 750,
+    modelId: "gpu-rtx-3080-fe",
+    specs: { VRAM: "10 GB GDDR6X" },
   },
   {
     id: "gpu-rtx-3090",
@@ -138,104 +229,119 @@ export const COMPONENTS: PCComponent[] = [
     specs: { VRAM: "24 GB GDDR6X", Largo: "Triple fan" },
   },
   {
-    id: "gpu-rtx-5070",
+    id: "gpu-rtx-4060-gigabyte",
     category: "gpu",
-    name: "NVIDIA RTX 5070",
+    name: "Gigabyte RTX 4060 Gaming OC",
+    brand: "Gigabyte",
+    price: 320,
+    modelId: "gpu-rtx-4060-gigabyte",
+    specs: { VRAM: "8 GB GDDR6" },
+  },
+  {
+    id: "gpu-rtx-4090-fe",
+    category: "gpu",
+    name: "NVIDIA RTX 4090 Founders Edition",
     brand: "NVIDIA",
-    price: 850,
-    modelId: "gpu-rtx-5070",
-    specs: { VRAM: "16 GB GDDR7", Largo: "Dual fan" },
+    price: 1700,
+    modelId: "gpu-rtx-4090-fe",
+    specs: { VRAM: "24 GB GDDR6X" },
   },
   {
-    id: "gpu-rx-7900",
+    id: "gpu-rtx-5090-fe",
     category: "gpu",
-    name: "AMD RX 7900 XTX",
-    brand: "AMD",
-    price: 950,
-    modelId: "gpu-amd-flagship",
-    specs: { VRAM: "24 GB GDDR6" },
+    name: "NVIDIA RTX 5090 Founders Edition",
+    brand: "NVIDIA",
+    price: 2200,
+    modelId: "gpu-rtx-5090-fe",
+    specs: { VRAM: "32 GB GDDR7" },
   },
 
-  // ---------- RAM ----------
+  // ---------- RAM (5 modelos reales) ----------
   {
-    id: "ram-corsair-16",
+    id: "ram-corsair-vengeance-lpx",
     category: "ram",
-    name: "Corsair Vengeance 16GB DDR5",
+    name: "Corsair Vengeance LPX",
     brand: "Corsair",
-    price: 75,
-    specs: { Capacidad: "16 GB", Velocidad: "5600 MHz" },
+    price: 65,
+    modelId: "ram-corsair-vengeance-lpx",
+    specs: { Tipo: "DDR4", Capacidad: "16 GB", Perfil: "Bajo" },
   },
   {
-    id: "ram-gskill-32",
+    id: "ram-corsair-vengeance-rgb",
     category: "ram",
-    name: "G.Skill Trident Z5 32GB",
-    brand: "G.Skill",
-    price: 145,
-    modelId: "ram-rgb",
-    specs: { Capacidad: "32 GB", Velocidad: "6400 MHz", RGB: "Sí" },
+    name: "Corsair Vengeance RGB Pro",
+    brand: "Corsair",
+    price: 95,
+    modelId: "ram-corsair-vengeance-rgb",
+    specs: { Tipo: "DDR4", Capacidad: "16 GB", RGB: "Sí" },
   },
   {
-    id: "ram-kingston-64",
+    id: "ram-crucial-ballistix",
     category: "ram",
-    name: "Kingston Fury Beast 64GB",
+    name: "Crucial Ballistix 8GB DDR4 3600",
+    brand: "Crucial",
+    price: 50,
+    modelId: "ram-crucial-ballistix",
+    specs: { Tipo: "DDR4", Capacidad: "8 GB", Velocidad: "3600 MHz" },
+  },
+  {
+    id: "ram-kingston-fury",
+    category: "ram",
+    name: "Kingston HyperX Fury 8GB",
     brand: "Kingston",
-    price: 260,
-    specs: { Capacidad: "64 GB", Velocidad: "5200 MHz" },
+    price: 55,
+    modelId: "ram-kingston-fury",
+    specs: { Tipo: "DDR4", Capacidad: "8 GB" },
+  },
+  {
+    id: "ram-tforce-ddr5",
+    category: "ram",
+    name: "T-Force DDR5",
+    brand: "Teamgroup",
+    price: 130,
+    modelId: "ram-tforce-ddr5",
+    specs: { Tipo: "DDR5", Capacidad: "32 GB" },
   },
 
-  // ---------- DISCOS ----------
+  // ---------- DISCOS (2 modelos reales) ----------
   {
-    id: "disk-samsung-980",
+    id: "disk-crucial-mx500",
     category: "disco",
-    name: "Samsung 980 Pro 1TB",
+    name: "Crucial MX500 SSD",
+    brand: "Crucial",
+    price: 60,
+    modelId: "disk-crucial-mx500",
+    specs: { Tipo: "SSD SATA 2.5\"", Capacidad: "1 TB" },
+  },
+  {
+    id: "disk-samsung-990-pro",
+    category: "disco",
+    name: "Samsung 990 Pro 1TB",
     brand: "Samsung",
     price: 110,
-    modelId: "disk-nvme",
-    specs: { Tipo: "NVMe", Capacidad: "1 TB" },
-  },
-  {
-    id: "disk-wd-blue-2tb",
-    category: "disco",
-    name: "WD Blue 2TB SATA",
-    brand: "Western Digital",
-    price: 60,
-    specs: { Tipo: "SSD SATA", Capacidad: "2 TB" },
-  },
-  {
-    id: "disk-seagate-4tb",
-    category: "disco",
-    name: "Seagate Barracuda 4TB",
-    brand: "Seagate",
-    price: 90,
-    modelId: "disk-hdd",
-    specs: { Tipo: "HDD 7200 RPM", Capacidad: "4 TB" },
+    modelId: "disk-samsung-990-pro",
+    specs: { Tipo: "M.2 NVMe", Capacidad: "1 TB" },
   },
 
-  // ---------- FUENTES ----------
+  // ---------- FUENTES (placeholders, no tenemos .glb propio) ----------
+  // Usamos los modelos procedurales hasta conseguir archivos reales.
   {
-    id: "psu-corsair-rm750",
+    id: "psu-default",
     category: "fuente",
-    name: "Corsair RM750x",
-    brand: "Corsair",
-    price: 130,
-    specs: { Potencia: "750W", Certificación: "80+ Gold" },
+    name: "Fuente ATX genérica 750W",
+    brand: "Genérico",
+    price: 90,
+    // Sin modelId → cae al DefaultFuente (placeholder procedural).
+    specs: { Potencia: "750W", Certificación: "80+ Bronze" },
   },
   {
-    id: "psu-evga-1000",
+    id: "psu-premium",
     category: "fuente",
-    name: "EVGA SuperNOVA 1000 G6",
-    brand: "EVGA",
+    name: "Fuente premium 1000W (placeholder)",
+    brand: "Genérico",
     price: 220,
     modelId: "psu-premium",
     specs: { Potencia: "1000W", Certificación: "80+ Gold" },
-  },
-  {
-    id: "psu-seasonic-850",
-    category: "fuente",
-    name: "Seasonic Focus GX-850",
-    brand: "Seasonic",
-    price: 160,
-    specs: { Potencia: "850W", Certificación: "80+ Gold" },
   },
 ];
 
@@ -246,7 +352,8 @@ export function getComponentsByCategory(category: PCCategory): PCComponent[] {
 }
 
 // Helper para encontrar un componente por id. Devuelve undefined
-// si no existe (por ej. si el id viene roto de una persistencia vieja).
+// si no existe (por ej. si el id viene roto de una persistencia vieja —
+// puede pasar al cargar un favorito guardado antes de actualizar el catálogo).
 export function getComponentById(id: string | undefined): PCComponent | undefined {
   if (!id) return undefined;
   return COMPONENTS.find((c) => c.id === id);
