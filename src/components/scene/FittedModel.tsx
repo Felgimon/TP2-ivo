@@ -77,6 +77,13 @@ const tmpCenter = new Vector3();
 // achicaría más de lo debido. Nuestro recorrido propaga la visibilidad
 // del padre y solo suma meshes que tengan geometría real y estén
 // visibles a través de toda la cadena de ancestros.
+//
+// Importante: SALTEAMOS la visibilidad de la raíz en el recorrido.
+// El propio FittedModel pone `visible={false}` en su wrapper de
+// medición (para que el modelo no flashee a tamaño crudo antes del
+// fit), y si propagáramos esa invisibilidad hacia abajo, ningún
+// mesh se mediría. El filtro de visibilidad solo aplica a los
+// descendientes a partir del nivel siguiente.
 function computeVisibleBox(root: Object3D, out: Box3): boolean {
   out.makeEmpty();
   // Modernizamos las matrices del subárbol antes de medir.
@@ -109,7 +116,13 @@ function computeVisibleBox(root: Object3D, out: Box3): boolean {
     }
   };
 
-  walk(root, true);
+  // Arrancamos desde los hijos de la raíz, no desde la raíz misma:
+  // así nuestro propio wrapper (que va con `visible=false`) no
+  // contamina la medición. Los descendientes del modelo siguen
+  // respetando su propia bandera `visible`.
+  for (const child of root.children) {
+    walk(child, true);
+  }
   return !out.isEmpty();
 }
 
