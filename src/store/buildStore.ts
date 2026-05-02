@@ -27,6 +27,11 @@ type BuildState = {
   // Limpia todo el build (botón "empezar de nuevo").
   resetBuild: () => void;
 
+  // Reemplaza el build actual por uno guardado (cargar favorito).
+  // Hace una copia del objeto para que el favorito no se modifique
+  // cuando el usuario edite el build después de cargarlo.
+  loadBuild: (build: Build) => void;
+
   // Calcula el precio total del build sumando los componentes elegidos.
   // Devuelve 0 si no hay nada seleccionado todavía.
   getTotalPrice: () => number;
@@ -44,6 +49,8 @@ export const useBuildStore = create<BuildState>((set, get) => ({
   setActiveCategory: (category) => set({ activeCategory: category }),
 
   resetBuild: () => set({ build: {} }),
+
+  loadBuild: (build) => set({ build: { ...build } }),
 
   getTotalPrice: () => {
     // Recorremos el build, traemos cada componente del catálogo y sumamos

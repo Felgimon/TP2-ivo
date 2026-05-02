@@ -1,13 +1,17 @@
 // Resumen del build: lista las categorías y muestra qué componente
-// eligió el usuario en cada una, más el precio total. También tiene
-// el botón para resetear todo.
+// eligió el usuario en cada una, más el precio total. Tiene también
+// los botones para Guardar (favoritos) y Empezar de nuevo.
 
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useBuildStore } from "@/store/buildStore";
+import { useAuthStore } from "@/store/authStore";
+import { useHydrated } from "@/hooks/useHydrated";
 import { getComponentById } from "@/data/components";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "@/types";
+import { SaveBuildModal } from "./SaveBuildModal";
 
 export function BuildSummary() {
   const build = useBuildStore((s) => s.build);
@@ -15,10 +19,16 @@ export function BuildSummary() {
   const setActiveCategory = useBuildStore((s) => s.setActiveCategory);
   const getTotalPrice = useBuildStore((s) => s.getTotalPrice);
 
-  const total = getTotalPrice();
+  // Para saber si el usuario está logueado y habilitar "Guardar".
+  const hydrated = useHydrated();
+  const currentUserId = useAuthStore((s) => s.currentUserId);
+  const isLoggedIn = hydrated && Boolean(currentUserId);
 
-  // Cuántas categorías ya tienen algo elegido (para mostrar progreso).
+  const [saveOpen, setSaveOpen] = useState(false);
+
+  const total = getTotalPrice();
   const filledCount = CATEGORY_ORDER.filter((c) => build[c]).length;
+  const hasAnything = filledCount > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -38,8 +48,6 @@ export function BuildSummary() {
           return (
             <li key={cat}>
               <button
-                // Click en una fila lleva a la pestaña de esa categoría
-                // (como un atajo para ir a editarla rápido).
                 onClick={() => setActiveCategory(cat)}
                 className="w-full text-left flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
               >
@@ -64,10 +72,9 @@ export function BuildSummary() {
         })}
       </ul>
 
-      {/* Total + reset */}
+      {/* Total + acciones */}
       <div className="border-t border-white/10 pt-4 mt-4">
         <motion.div
-          // Animamos el número del total cuando cambia, para que se note.
           key={total}
           initial={{ scale: 0.95, opacity: 0.6 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -80,14 +87,36 @@ export function BuildSummary() {
           </span>
         </motion.div>
 
-        <button
-          onClick={resetBuild}
-          disabled={filledCount === 0}
-          className="w-full text-xs py-2 rounded-lg border border-white/10 text-white/70 hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-        >
-          Empezar de nuevo
-        </button>
+        {/* Acciones: Guardar (si logueado y con piezas) + Resetear */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSaveOpen(true)}
+            // Deshabilitado si no hay nada que guardar O si no hay sesión.
+            // Si no hay sesión, el título explica por qué no se puede.
+            disabled={!hasAnything || !isLoggedIn}
+            title={
+              !isLoggedIn
+                ? "Iniciá sesión para guardar tu build"
+                : !hasAnything
+                ? "Elegí al menos un componente"
+                : "Guardar este build en favoritos"
+            }
+            className="flex-1 text-xs py-2 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/25 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Guardar
+          </button>
+          <button
+            onClick={resetBuild}
+            disabled={!hasAnything}
+            className="flex-1 text-xs py-2 rounded-lg border border-white/10 text-white/70 hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Empezar de nuevo
+          </button>
+        </div>
       </div>
+
+      {/* Modal "Guardar build" */}
+      <SaveBuildModal open={saveOpen} onClose={() => setSaveOpen(false)} />
     </div>
   );
 }
