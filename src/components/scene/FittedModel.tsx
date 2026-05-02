@@ -57,9 +57,20 @@ type FittedModelProps = {
   // Factor de "respiro": 1 = ocupa todo el slot; 0.95 deja un 5% de aire
   // en cada lado para que no toque las paredes.
   paddingFactor?: number;
+  // Si true (default), el modelo se escala UNIFORMEMENTE (mantiene
+  // proporciones, queda dentro de targetSize con posible aire).
+  // Si false, se escala POR EJE para llenar exactamente targetSize
+  // — distorsiona el modelo, pero garantiza que ocupe toda la caja.
+  // Lo usamos así para el gabinete, porque las posiciones de los slots
+  // interiores asumen que el case ocupa el CHASSIS_BOUNDS completo;
+  // si lo escaláramos uniforme y el case fuera más alto que ancho,
+  // el ancho real quedaría más chico que CHASSIS_BOUNDS y los componentes
+  // se saldrían por los costados.
+  preserveAspect?: boolean;
 };
 
-type FitState = { scale: number; pos: Vec3 };
+// El scale ahora es Vec3 (uno por eje) para soportar escalado no-uniforme.
+type FitState = { scale: Vec3; pos: Vec3 };
 
 // Reusamos estos objetos de three.js entre llamadas para no andar
 // asignando memoria en cada render.
@@ -143,6 +154,7 @@ export function FittedModel({
   children,
   targetSize,
   paddingFactor = 0.95,
+  preserveAspect = true,
 }: FittedModelProps) {
   const ref = useRef<Group>(null);
   const [fit, setFit] = useState<FitState | null>(null);
@@ -192,21 +204,35 @@ export function FittedModel({
 
     // Factor de escala por eje. Si un eje es prácticamente 0 (placa
     // muy chata), usamos 1 para no romper la cuenta y dejar que los
-    // otros ejes determinen la escala. Si todos los ejes son tiny,
-    // el modelo igual se escala vía los que sí tengan tamaño.
+    // otros ejes determinen la escala.
     const sx = tmpSize.x > 1e-6 ? targetSize[0] / tmpSize.x : 1;
     const sy = tmpSize.y > 1e-6 ? targetSize[1] / tmpSize.y : 1;
     const sz = tmpSize.z > 1e-6 ? targetSize[2] / tmpSize.z : 1;
 
-    // Tomamos el min para que el modelo entre completo (sin distorsión)
-    // y le aplicamos el padding para dejar un cachito de aire.
-    const rawScale = Math.min(sx, sy, sz);
-    const scale = rawScale * paddingFactor;
+    // Decidimos las escalas por eje.
+    //   - Modo "preservar proporción" (uniforme): tomamos el min para que
+    //     el modelo entre completo, mismo factor para los tres ejes.
+    //   - Modo "rellenar" (no uniforme): cada eje se escala independiente
+    //     para llenar exactamente el targetSize.
+    let scale: Vec3;
+    if (preserveAspect) {
+      const u = Math.min(sx, sy, sz) * paddingFactor;
+      scale = [u, u, u];
+    } else {
+      scale = [sx * paddingFactor, sy * paddingFactor, sz * paddingFactor];
+    }
 
-    if (!Number.isFinite(scale) || scale <= 0) {
+    if (
+      !Number.isFinite(scale[0]) ||
+      !Number.isFinite(scale[1]) ||
+      !Number.isFinite(scale[2]) ||
+      scale[0] <= 0 ||
+      scale[1] <= 0 ||
+      scale[2] <= 0
+    ) {
       if (process.env.NODE_ENV === "development") {
         console.warn(
-          `[FittedModel] escala calculada inválida (${scale}). Tamaño detectado: [${tmpSize.x}, ${tmpSize.y}, ${tmpSize.z}].`
+          `[FittedModel] escala calculada inválida (${scale.join(", ")}). Tamaño detectado: [${tmpSize.x}, ${tmpSize.y}, ${tmpSize.z}].`
         );
       }
       return;
@@ -214,34 +240,38 @@ export function FittedModel({
 
     // Aviso si el modelo viene en unidades raras (muy chico = aprox.
     // metros cuando esperábamos cm; muy grande = aprox. mm cuando
-    // esperábamos cm). No abortamos: aplicamos la corrección igual,
-    // solo dejamos rastro en la consola para que el usuario sepa.
+    // esperábamos cm). Tomamos el max(scale) como referencia.
     if (process.env.NODE_ENV === "development") {
-      if (scale > 1000) {
+      const refScale = Math.max(scale[0], scale[1], scale[2]);
+      if (refScale > 1000) {
         console.info(
-          `[FittedModel] modelo MUY chico, lo agrando ×${scale.toFixed(0)}. Tamaño raw: [${tmpSize.x.toExponential(1)}, ${tmpSize.y.toExponential(1)}, ${tmpSize.z.toExponential(1)}]. ¿Tal vez está en metros y deberíamos en cm?`
+          `[FittedModel] modelo MUY chico, agrandado ×${refScale.toFixed(0)}. Tamaño raw: [${tmpSize.x.toExponential(1)}, ${tmpSize.y.toExponential(1)}, ${tmpSize.z.toExponential(1)}]. ¿En metros cuando esperábamos cm?`
         );
-      } else if (scale < 0.001) {
+      } else if (refScale < 0.001) {
         console.info(
-          `[FittedModel] modelo MUY grande, lo achico ×${scale.toExponential(1)}. Tamaño raw: [${tmpSize.x.toFixed(1)}, ${tmpSize.y.toFixed(1)}, ${tmpSize.z.toFixed(1)}]. ¿Tal vez está en mm y deberíamos en cm?`
+          `[FittedModel] modelo MUY grande, achicado ×${refScale.toExponential(1)}. Tamaño raw: [${tmpSize.x.toFixed(1)}, ${tmpSize.y.toFixed(1)}, ${tmpSize.z.toFixed(1)}]. ¿En mm cuando esperábamos cm?`
         );
       }
     }
 
+    // El offset de centrado se calcula EJE POR EJE (porque la escala
+    // ahora puede ser distinta en cada uno).
     setFit({
       scale,
       pos: [
-        -tmpCenter.x * scale,
-        -tmpCenter.y * scale,
-        -tmpCenter.z * scale,
+        -tmpCenter.x * scale[0],
+        -tmpCenter.y * scale[1],
+        -tmpCenter.z * scale[2],
       ],
     });
   });
 
-  // Spring que lleva la escala de 0 al valor calculado.
+  // Spring de "aparición" que va de 0 a 1. Multiplica al fit.scale,
+  // así el modelo crece desde un punto hasta su tamaño final, sin
+  // importar si la escala es uniforme o no.
   const spring = useSpring({
-    scale: fit?.scale ?? 0,
-    from: { scale: 0 },
+    appear: fit ? 1 : 0,
+    from: { appear: 0 },
     config: { tension: 220, friction: 18 },
   });
 
@@ -256,10 +286,17 @@ export function FittedModel({
     );
   }
 
-  // Segundo render (fitted): pos centrante + scale animado.
+  // Segundo render (fitted):
+  //   1) Outer: posición de centrado + scale animado uniforme (0→1).
+  //   2) Inner: scale por eje (no animado) que lleva al modelo a sus
+  //      dimensiones finales según preserveAspect.
+  // Multiplicar ambas capas da el efecto deseado: el modelo "aparece"
+  // creciendo desde un punto hasta su tamaño correcto.
   return (
-    <animated.group position={fit.pos} scale={spring.scale}>
-      <group ref={ref}>{children}</group>
+    <animated.group position={fit.pos} scale={spring.appear}>
+      <group scale={fit.scale}>
+        <group ref={ref}>{children}</group>
+      </group>
     </animated.group>
   );
 }

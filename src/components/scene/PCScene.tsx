@@ -107,6 +107,15 @@ export function PCScene() {
             key={`gab-${build.gabinete ?? "default"}`}
             targetSize={CHASSIS_BOUNDS}
             paddingFactor={1}
+            // No preservamos proporciones para el chassis: lo estiramos
+            // EXACTAMENTE a CHASSIS_BOUNDS. Si lo escaláramos uniforme,
+            // un case alto y angosto (típico mid-tower 1:2.3:2.4) se
+            // ajustaría por el eje más restrictivo y quedaría más chico
+            // que CHASSIS_BOUNDS en los otros — los componentes (que se
+            // posicionan asumiendo CHASSIS_BOUNDS completos) se saldrían
+            // por los costados. La distorsión del case es leve y
+            // aceptable porque está semi-transparente.
+            preserveAspect={false}
           >
             <MakeTransparent>
               <GabineteModel />
