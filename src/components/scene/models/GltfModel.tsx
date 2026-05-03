@@ -50,9 +50,13 @@ type GltfModelProps = {
 // hay que aplicar al root para dejarlo en la orientación esperada.
 // Si las dimensiones ya cuadran, devuelve [0,0,0] (sin rotación).
 //
-// La idea: cada categoría tiene una "forma" típica (gabinete = tall,
-// gpu = wide, motherboard = thin). Comparamos con las dimensiones del
-// bounding box y elegimos el rot que pone el axis correcto en su lugar.
+// FILOSOFÍA: SOLO auto-orientamos categorías cuya "forma típica" es
+// PREDECIBLE (RAM siempre alta, GPU siempre ancha, motherboard siempre
+// fina). Para gabinete y disipador NO auto-orientamos: sus formas
+// varían demasiado (mid-tower vs ITX cubo, tower cooler vs AIO 360mm)
+// y la heurística termina rompiendo más casos de los que arregla.
+// Si un modelo concreto viene mal orientado, se corrige con un
+// `rotation` manual en la entrada del registry.
 function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
   scene.updateMatrixWorld(true);
   const box = new Box3().setFromObject(scene);
@@ -61,49 +65,36 @@ function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
   const size = new Vector3();
   box.getSize(size);
 
-  // Cuál de los tres ejes es el más largo / más corto.
-  const xMax = size.x >= size.y && size.x >= size.z;
-  const yMax = size.y >= size.x && size.y >= size.z;
-  const zMax = size.z >= size.x && size.z >= size.y;
-
-  const xMin = size.x <= size.y && size.x <= size.z;
-  const yMin = size.y <= size.x && size.y <= size.z;
-  const zMin = size.z <= size.x && size.z <= size.y;
-
   switch (category) {
-    // Componentes "altos": Y debería ser el eje más largo.
-    case "gabinete":
-    case "disipador":
-    case "ram":
-      if (yMax) return [0, 0, 0];
-      // Z-up clásico de Blender → rotamos -90° en X (lleva Z a Y).
-      if (zMax) return [-Math.PI / 2, 0, 0];
-      // X es el más largo → rotamos 90° en Z (lleva X a Y).
-      if (xMax) return [0, 0, Math.PI / 2];
-      return [0, 0, 0];
-
-    // Componentes "anchos": X debería ser el eje más largo.
-    case "gpu":
-      if (xMax) return [0, 0, 0];
-      // Z largo → rotamos 90° en Y (lleva Z a X).
-      if (zMax) return [0, Math.PI / 2, 0];
-      // Y largo → rotamos -90° en Z (lleva Y a X).
-      if (yMax) return [0, 0, -Math.PI / 2];
-      return [0, 0, 0];
-
-    // Componentes "planos": Z debería ser el eje más corto (placa fina).
-    case "motherboard":
-      if (zMin) return [0, 0, 0];
-      // X es el más fino → rotamos 90° en Y (lleva X a Z).
-      if (xMin) return [0, Math.PI / 2, 0];
-      // Y es el más fino → rotamos 90° en X (lleva Y a Z).
-      if (yMin) return [Math.PI / 2, 0, 0];
-      return [0, 0, 0];
-
-    // Cubos / formas estándar: confiamos en la orientación del modelo.
-    case "cpu":
-    case "fuente":
-    case "disco":
+    case "ram": {
+      // RAM stick: Y debe ser el eje más largo (la altura del módulo).
+      if (size.y >= size.x && size.y >= size.z) return [0, 0, 0];
+      if (size.z > size.x) return [-Math.PI / 2, 0, 0];
+      return [0, 0, Math.PI / 2];
+    }
+    case "gpu": {
+      // GPU: X debe ser el eje más largo (ancho de la placa).
+      if (size.x >= size.y && size.x >= size.z) return [0, 0, 0];
+      if (size.z > size.y) return [0, Math.PI / 2, 0];
+      return [0, 0, -Math.PI / 2];
+    }
+    case "motherboard": {
+      // Motherboard: Z debe ser el eje más chico (placa fina).
+      if (size.z <= size.x && size.z <= size.y) return [0, 0, 0];
+      if (size.x < size.y) return [0, Math.PI / 2, 0];
+      return [Math.PI / 2, 0, 0];
+    }
+    case "disco": {
+      // Disco apoyado sobre el motherboard como M.2: X debe ser el
+      // más largo (long axis horizontal). Si viene parado o de costado,
+      // lo acostamos.
+      if (size.x >= size.y && size.x >= size.z) return [0, 0, 0];
+      if (size.z > size.y) return [0, Math.PI / 2, 0];
+      return [0, 0, -Math.PI / 2];
+    }
+    // Para gabinete, disipador, cpu, fuente: confiamos en la orientación
+    // nativa del modelo. Si algún caso viene mal orientado, pasar
+    // `rotation` manual en el registry.
     default:
       return [0, 0, 0];
   }

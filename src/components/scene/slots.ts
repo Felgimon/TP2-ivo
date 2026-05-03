@@ -1,97 +1,108 @@
 // Slots y dimensiones de referencia del gabinete.
 //
-// Tener "tamaños" además de "posiciones" hace que cualquier modelo
-// (placeholder o .glb real) se auto-ajuste al espacio que le toca.
-// Un .glb de RTX 5090 que viene en escala "real" (30 cm de largo) o uno
-// que viene en metros, ambos terminan ocupando la misma caja después
-// del FittedModel.
+// ARQUITECTURA DEL SISTEMA DE TAMAÑO Y POSICIÓN
+// ==============================================
 //
-// Cómo funciona el sistema:
-//   1) `CHASSIS_BOUNDS` es la caja de referencia del gabinete.
-//      Cuando metés un .glb de gabinete, lo escalamos para que entre
-//      exactamente en esta caja. Así las posiciones de los slots son
-//      siempre las mismas, sin importar qué case uses.
-//   2) Cada slot tiene un `size` (X, Y, Z) que es la caja máxima en
-//      la que el componente debe entrar (manteniendo proporción).
-//   3) `<FittedModel>` (en FittedModel.tsx) toma el modelo y calcula
-//      el factor de escala + el offset para centrarlo en su slot.
+// 1) ESCALA DE REFERENCIA (`MM_PER_UNIT`)
+//    1 unidad de la escena = 100 mm reales. Permite expresar el `size`
+//    de cada slot a partir de DIMENSIONES REALES, así los componentes
+//    mantienen proporciones realistas entre sí.
 //
-// Las posiciones están pensadas para una distribución típica ATX:
-//   - Motherboard pegada al fondo del case.
-//   - CPU en la parte superior izquierda (mirando desde el panel
-//     de vidrio).
-//   - Disipador justo arriba del CPU.
-//   - RAM al lado del CPU.
-//   - GPU horizontal abajo del CPU, atravesando el ancho del case.
-//   - Disco en la bahía derecha, mitad inferior.
-//   - Fuente abajo de todo, atrás.
+// 2) GABINETE (`CHASSIS_BOUNDS`)
+//    Todo gabinete se normaliza a [4, 6, 4] (~ 400×600×400 mm) con
+//    `<FittedModel preserveAspect={false}>`. Sin importar el case que
+//    cargues, ocupa el mismo volumen visual y los slots interiores
+//    siempre apuntan al mismo lugar.
+//
+// 3) MOTHERBOARD: HAND-TUNED, NO MM
+//    La motherboard es la EXCEPCIÓN al sistema mm: la dimensiono a mano
+//    para que ocupe ~80% del chassis (visualmente parece "la pared del
+//    fondo del case"). Si la dejara en sus 244×305 mm reales, se vería
+//    chica vs el chassis (~60% de ancho). Como el chassis se estira
+//    no-uniforme a [4,6,4], la noción de "1 mm real" pierde sentido para
+//    la pieza que define el plano de fondo.
+//
+// 4) RESTO DE COMPONENTES: MM REALES
+//    Los demás van con mmSize() basado en specs estándar. Como el slot.z
+//    es generoso (los modelos .glb suelen tener bbox.z mucho mayor que
+//    el espesor real por incluir conectores y disipadores), el modelo
+//    no queda Z-limitado y se ve a tamaño correcto.
+//
+// 5) ANCLAJE A LA MOTHERBOARD
+//    CPU, RAM y DISCO van apoyados sobre la motherboard (Z = -1.0,
+//    apenas adelante del plano de la mb que está en Z = -1.65).
+//    El disco se posiciona como un M.2 NVMe horizontal (slot pequeño y
+//    chato). El disipador y la GPU quedan más adelantados porque
+//    sobresalen del plano del MB.
 
 import type { PCCategory } from "@/types";
 
-// Tupla [x, y, z]. Para position, rotation y size.
 export type Vec3 = [number, number, number];
 
-// Caja de referencia del gabinete. Todo gabinete (placeholder o .glb)
-// se normaliza a este tamaño. Ancho 4, alto 6, profundidad 4.
+const MM_PER_UNIT = 100;
+const mm = (n: number): number => n / MM_PER_UNIT;
+const mmSize = (w: number, h: number, d: number): Vec3 => [mm(w), mm(h), mm(d)];
+
 export const CHASSIS_BOUNDS: Vec3 = [4.0, 6.0, 4.0];
 
-// Configuración de un slot interior: dónde va el centro del componente
-// y qué caja máxima puede ocupar.
 export type SlotConfig = {
   position: Vec3;
   rotation?: Vec3;
   size: Vec3;
 };
 
-// Slots para todos los componentes que viven ADENTRO del gabinete.
-// El gabinete no está acá: él es el contenedor.
+// Posición Z del centro de la motherboard.
+const MB_Z = -1.65;
+
+// Posición Z para componentes apoyados sobre la motherboard.
+// Apenas adelante del plano del MB (-1.65) para evitar superposición
+// con los capacitores que sobresalen del PCB en los modelos reales.
+const ON_MB_Z = -1.0;
+
 export const SLOTS: Record<Exclude<PCCategory, "gabinete">, SlotConfig> = {
-  // Motherboard: pegada al fondo, plana y vertical.
-  // Z muy negativo = bien al fondo. Profundidad chiquita (es una placa).
+  // Motherboard: HAND-TUNED, ~80% del chassis. Domina la pared del fondo.
   motherboard: {
-    position: [0, 0, -1.65],
-    size: [3.0, 4.5, 0.25],
+    position: [0, 0, MB_Z],
+    size: [3.2, 4.5, 1.2],
   },
 
-  // CPU: pegado al socket de la motherboard.
-  // Z = -1.5 para que su cara trasera quede contra la mobo y el chip
-  // no quede flotando con un gap visible.
+  // CPU: socket en la zona superior-izquierda del MB.
+  // Slot pequeño (cube ~60mm) para que el chip se vea chico vs la mb.
   cpu: {
-    position: [-0.7, 1.0, -1.5],
-    size: [0.7, 0.7, 0.25],
+    position: [-0.5, 0.8, ON_MB_Z],
+    size: mmSize(60, 60, 60),
   },
 
-  // Disipador: arriba del CPU, ocupa bastante espacio vertical.
-  // Y = 2.1 para que se siente sobre el CPU sin meterse adentro.
-  // Z = -0.9 lo lleva un poco más adelante que el CPU (los coolers
-  // de torre suelen ser más profundos que el chip).
-  disipador: {
-    position: [-0.7, 2.1, -0.9],
-    size: [1.3, 1.6, 1.3],
-  },
-
-  // RAM: a la derecha del CPU, sticks parados.
-  // Z = -1.25 alinea con el plano del CPU/mobo.
+  // RAM: kit de 2 sticks, JUSTO al lado del CPU socket.
+  // Distancia X de 0.7 al CPU para que se vean "encastrados" próximos.
   ram: {
-    position: [0.4, 1.2, -1.25],
-    size: [1.1, 1.5, 0.6],
+    position: [0.2, 0.8, ON_MB_Z],
+    size: mmSize(50, 150, 40),
   },
 
-  // GPU: horizontal, abajo del CPU. El componente más largo del set.
+  // Disipador: arriba del CPU. Sticks adelantado en Z.
+  disipador: {
+    position: [-0.5, 2.0, -0.3],
+    size: mmSize(170, 180, 170),
+  },
+
+  // GPU: parte inferior del MB (zona PCIe). Sticks adelantado.
   gpu: {
-    position: [0.0, -0.4, -0.7],
-    size: [3.4, 1.0, 1.6],
+    position: [0, -1.0, -0.5],
+    size: mmSize(330, 160, 100),
   },
 
-  // Disco: bahía a la derecha, abajo. Acepta NVMe finito o HDD 3.5".
+  // Disco: como un M.2 NVMe horizontal apoyado sobre la motherboard.
+  // Slot CHATO (Z=10mm) para que el modelo quede flat sobre el PCB.
+  // Posición típica: entre el CPU socket y la PCIe.
   disco: {
-    position: [1.4, -1.5, 0.4],
-    size: [1.1, 0.5, 1.5],
+    position: [0.2, 0.1, ON_MB_Z],
+    size: mmSize(100, 30, 10),
   },
 
-  // Fuente: abajo del gabinete, atrás. Dimensiones típicas ATX.
+  // Fuente: abajo del case, bahía estándar ATX.
   fuente: {
-    position: [-0.5, -2.4, -0.7],
-    size: [1.9, 1.0, 1.6],
+    position: [-0.5, -2.5, -0.7],
+    size: mmSize(160, 110, 160),
   },
 };
