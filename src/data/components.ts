@@ -160,35 +160,33 @@ export const COMPONENTS: PCComponent[] = [
     specs: { Núcleos: "24", "Frecuencia turbo": "6.0 GHz", Socket: "LGA1700" },
   },
 
-  // ---------- DISIPADORES (placeholders, no tenemos .glb propio) ----------
-  // Usamos los modelos procedurales hechos a mano hasta conseguir
-  // archivos .glb reales para esta categoría.
+  // ---------- DISIPADORES (3 modelos reales) ----------
   {
-    id: "cool-default-air",
+    id: "cool-cooler-master",
     category: "disipador",
-    name: "Cooler de aire genérico",
-    brand: "Genérico",
-    price: 35,
-    // Sin modelId → cae al DefaultDisipador (cooler de torre placeholder).
+    name: "Cooler Master Hyper 212",
+    brand: "Cooler Master",
+    price: 65,
+    modelId: "cool-cooler-master",
     specs: { Tipo: "Aire (single tower)" },
   },
   {
-    id: "cool-noctua-d15",
+    id: "cool-pc-cooler",
     category: "disipador",
-    name: "Noctua NH-D15 (placeholder)",
-    brand: "Noctua",
-    price: 110,
-    modelId: "cool-noctua",
-    specs: { Tipo: "Aire (dual tower)" },
+    name: "Tower Air Cooler",
+    brand: "Genérico",
+    price: 45,
+    modelId: "cool-pc-cooler",
+    specs: { Tipo: "Aire (tower)" },
   },
   {
-    id: "cool-aio-360",
+    id: "cool-liquid-aio",
     category: "disipador",
-    name: "AIO 360mm RGB (placeholder)",
+    name: "AIO Liquid Cooler 240mm",
     brand: "Genérico",
-    price: 200,
-    modelId: "cool-aio",
-    specs: { Tipo: "Líquida AIO 360mm" },
+    price: 130,
+    modelId: "cool-liquid-aio",
+    specs: { Tipo: "Líquida AIO 240mm" },
   },
 
   // ---------- GPUs (7 modelos reales) ----------
@@ -323,25 +321,15 @@ export const COMPONENTS: PCComponent[] = [
     specs: { Tipo: "M.2 NVMe", Capacidad: "1 TB" },
   },
 
-  // ---------- FUENTES (placeholders, no tenemos .glb propio) ----------
-  // Usamos los modelos procedurales hasta conseguir archivos reales.
+  // ---------- FUENTES (1 modelo real) ----------
   {
-    id: "psu-default",
+    id: "psu-atx-750w",
     category: "fuente",
-    name: "Fuente ATX genérica 750W",
+    name: "Fuente ATX 750W 80+ Bronze",
     brand: "Genérico",
-    price: 90,
-    // Sin modelId → cae al DefaultFuente (placeholder procedural).
+    price: 95,
+    modelId: "psu-atx-750w",
     specs: { Potencia: "750W", Certificación: "80+ Bronze" },
-  },
-  {
-    id: "psu-premium",
-    category: "fuente",
-    name: "Fuente premium 1000W (placeholder)",
-    brand: "Genérico",
-    price: 220,
-    modelId: "psu-premium",
-    specs: { Potencia: "1000W", Certificación: "80+ Gold" },
   },
 ];
 

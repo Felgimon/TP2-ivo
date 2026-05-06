@@ -5,34 +5,34 @@
 //   1) AUTO-ORIENTACIÓN: si pasás `category`, intentamos detectar si el
 //      modelo viene en una orientación "rara" (típico problema de modelos
 //      exportados con Z-up de Blender en lugar de Y-up de three.js) y le
-//      aplicamos la rotación que lo deja como debería estar. La heurística
-//      mira las dimensiones del bounding box y las compara con lo
-//      esperado para esa categoría (ej. un gabinete debe ser tallado en Y).
+//      aplicamos la rotación que lo deja como debería estar.
 //
 //   2) OVERRIDE MANUAL: si la heurística no acierta para un modelo
 //      puntual, podés pasar `rotation={[x, y, z]}` y eso tiene precedencia.
 //
 //   3) RE-CENTRADO: el `<FittedModel>` que envuelve a este componente ya
 //      se encarga de centrar el bounding box en el origen del slot, así
-//      que un modelo con el origen mal puesto (en una esquina, por ej.)
-//      igual queda colocado correctamente. Acá solo nos preocupamos por
-//      la orientación.
+//      que un modelo con el origen mal puesto igual queda colocado bien.
+//
+//   4) ANIMACIONES: si el .glb trae animaciones embebidas (rotor de un
+//      fan, LEDs RGB, lo que sea), las reproducimos en LOOP INFINITO
+//      mientras el modelo esté visible. Cuando el componente se
+//      desmonta (cambia el componente seleccionado), las paramos para
+//      no consumir CPU al pedo.
 //
 // Notas técnicas:
-//   - useGLTF (drei) cachea por URL → un mismo modelo usado en varias
-//     instancias se descarga UNA sola vez.
-//   - Clonamos la escena ANTES de aplicar transformaciones (si no, dos
-//     instancias del mismo .glb se pisarían entre sí porque comparten
-//     el mismo Object3D).
-//   - Envolvemos el clone en un Group nuevo en lugar de setear la
-//     rotación directo en el clone, para no pisar transformaciones que
-//     puedan venir del archivo original.
+//   - useGLTF (drei) cachea por URL → un mismo modelo se descarga UNA vez.
+//   - Clonamos la escena con scene.clone() para que dos instancias del
+//     mismo .glb no se pisen entre sí compartiendo el mismo Object3D.
+//   - useAnimations (drei) crea un AnimationMixer y lo va updateando
+//     en cada frame automáticamente. Sus actions están indexadas por
+//     el nombre del clip dentro del .glb.
 
 "use client";
 
-import { useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
-import { Box3, Group, type Object3D, Vector3 } from "three";
+import { useEffect, useMemo } from "react";
+import { useAnimations, useGLTF } from "@react-three/drei";
+import { Box3, Group, LoopRepeat, type Object3D, Vector3 } from "three";
 
 import type { PCCategory } from "@/types";
 import type { Vec3 } from "../slots";
@@ -48,15 +48,14 @@ type GltfModelProps = {
 
 // Heurística: dado un modelo y su categoría, devuelve la rotación que
 // hay que aplicar al root para dejarlo en la orientación esperada.
-// Si las dimensiones ya cuadran, devuelve [0,0,0] (sin rotación).
 //
 // FILOSOFÍA: SOLO auto-orientamos categorías cuya "forma típica" es
 // PREDECIBLE (RAM siempre alta, GPU siempre ancha, motherboard siempre
-// fina). Para gabinete y disipador NO auto-orientamos: sus formas
-// varían demasiado (mid-tower vs ITX cubo, tower cooler vs AIO 360mm)
-// y la heurística termina rompiendo más casos de los que arregla.
-// Si un modelo concreto viene mal orientado, se corrige con un
-// `rotation` manual en la entrada del registry.
+// fina, CPU siempre chip plano, disco siempre M.2 horizontal). Para
+// gabinete y disipador NO auto-orientamos: sus formas varían demasiado
+// (mid-tower vs ITX, tower cooler vs AIO 360mm) y la heurística termina
+// rompiendo más casos de los que arregla. Si un modelo concreto viene
+// mal orientado, se corrige con un `rotation` manual en el registry.
 function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
   scene.updateMatrixWorld(true);
   const box = new Box3().setFromObject(scene);
@@ -87,22 +86,19 @@ function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
     case "cpu": {
       // CPU: Z debe ser el eje más chico (chip plano), igual que el
       // motherboard. Esto pone la IHS (cara superior con el logo)
-      // mirando hacia el viewer en lugar de hacia el techo. Sin este
-      // auto-orient, los modelos vienen con IHS al +Y (chip "sobre una
-      // mesa") y se ven como un cubo flotando con la cara mirando arriba.
+      // mirando hacia el viewer en lugar de hacia el techo.
       if (size.z <= size.x && size.z <= size.y) return [0, 0, 0];
       if (size.x < size.y) return [0, Math.PI / 2, 0];
       return [Math.PI / 2, 0, 0];
     }
     case "disco": {
       // Disco apoyado sobre el motherboard como M.2: X debe ser el
-      // más largo (long axis horizontal). Si viene parado o de costado,
-      // lo acostamos.
+      // más largo (long axis horizontal).
       if (size.x >= size.y && size.x >= size.z) return [0, 0, 0];
       if (size.z > size.y) return [0, Math.PI / 2, 0];
       return [0, 0, -Math.PI / 2];
     }
-    // Para gabinete, disipador, cpu, fuente: confiamos en la orientación
+    // Para gabinete, disipador, fuente: confiamos en la orientación
     // nativa del modelo. Si algún caso viene mal orientado, pasar
     // `rotation` manual en el registry.
     default:
@@ -111,7 +107,8 @@ function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
 }
 
 export function GltfModel({ url, category, rotation }: GltfModelProps) {
-  const { scene } = useGLTF(url);
+  // useGLTF nos da la escena Y las animaciones (si el .glb las trae).
+  const { scene, animations } = useGLTF(url);
 
   // Clave estable para useMemo cuando rotation es un array (que cambia
   // de identidad en cada render del padre, aunque los valores sean iguales).
@@ -119,12 +116,12 @@ export function GltfModel({ url, category, rotation }: GltfModelProps) {
     ? `${rotation[0]},${rotation[1]},${rotation[2]}`
     : null;
 
+  // Clonamos la escena y le aplicamos la rotación. Devolvemos también el
+  // clone "interno" porque useAnimations necesita apuntar a la escena
+  // que contiene los nodos animados (no al Group envolvente).
   const transformed = useMemo(() => {
-    // Cloning compartido: la geometría/materiales se reusan, solo se
-    // duplica el Object3D, así que es barato.
     const sceneClone = scene.clone();
 
-    // Decidimos la rotación: manual override > auto-detect > sin cambios.
     let rot: Vec3 = [0, 0, 0];
     if (rotation) {
       rot = rotation;
@@ -132,16 +129,44 @@ export function GltfModel({ url, category, rotation }: GltfModelProps) {
       rot = detectAutoRotation(sceneClone, category);
     }
 
-    // Wrap en un Group nuevo: aplicamos la rotación acá, sin pisar la
-    // del root del .glb (que puede traer transformaciones legítimas).
     const root = new Group();
     root.add(sceneClone);
     root.rotation.set(rot[0], rot[1], rot[2]);
     root.updateMatrixWorld(true);
 
-    return root;
+    return { root, sceneClone };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, category, rotKey]);
 
-  return <primitive object={transformed} />;
+  // Atamos las animaciones al sceneClone. Drei se encarga de crear el
+  // AnimationMixer y updatearlo en cada frame.
+  const { actions } = useAnimations(animations, transformed.sceneClone);
+
+  // Reproducimos TODAS las animaciones del modelo en loop infinito.
+  // Si el .glb no trae animaciones (la mayoría de los componentes de
+  // PC), `actions` es un objeto vacío y el effect no hace nada.
+  useEffect(() => {
+    if (!animations || animations.length === 0) return;
+
+    const playing = Object.values(actions).filter(
+      (a): a is NonNullable<typeof a> => a != null
+    );
+    playing.forEach((action) => {
+      action.reset();
+      action.setLoop(LoopRepeat, Infinity);
+      // clampWhenFinished=false para que el mixer no "fije" el último
+      // frame al terminar; queremos que loopee sin pausas.
+      action.clampWhenFinished = false;
+      action.play();
+    });
+
+    // Cleanup: cuando el modelo se desmonta (el usuario cambió el
+    // componente, etc.), paramos las acciones para que el mixer no
+    // siga consumiendo CPU.
+    return () => {
+      playing.forEach((action) => action.stop());
+    };
+  }, [actions, animations]);
+
+  return <primitive object={transformed.root} />;
 }

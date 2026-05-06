@@ -33,12 +33,6 @@ import {
   DefaultGabinete,
 } from "./DefaultModels";
 
-import {
-  CoolerNoctua,
-  CoolerAio,
-  PsuPremium,
-} from "./HeroModels";
-
 import { GltfModel } from "./GltfModel";
 
 // Componente de modelo: una función React sin props (los wrappers
@@ -91,9 +85,10 @@ const MODEL_REGISTRY: Record<string, ModelComponent> = {
   "cpu-i7-14700k": gltfFor("cpu", "cpu-i7-14700k"),
   "cpu-i9-14900k": gltfFor("cpu", "cpu-i9-14900k"),
 
-  // Disipadores (placeholders procedurales — sin .glb propio todavía)
-  "cool-noctua": CoolerNoctua,
-  "cool-aio": CoolerAio,
+  // Disipadores (.glb reales)
+  "cool-cooler-master": gltfFor("disipador", "cool-cooler-master"),
+  "cool-pc-cooler": gltfFor("disipador", "cool-pc-cooler"),
+  "cool-liquid-aio": gltfFor("disipador", "cool-liquid-aio"),
 
   // GPUs (.glb reales)
   "gpu-gtx-1660": gltfFor("gpu", "gpu-gtx-1660"),
@@ -115,8 +110,8 @@ const MODEL_REGISTRY: Record<string, ModelComponent> = {
   "disk-crucial-mx500": gltfFor("disco", "disk-crucial-mx500"),
   "disk-samsung-990-pro": gltfFor("disco", "disk-samsung-990-pro"),
 
-  // Fuentes (placeholder procedural — sin .glb propio todavía)
-  "psu-premium": PsuPremium,
+  // Fuentes (.glb real)
+  "psu-atx-750w": gltfFor("fuente", "psu-atx-750w"),
 };
 
 // Mapa de "modelo por default" para cada categoría.
