@@ -78,16 +78,23 @@ export const SLOTS: Record<Exclude<PCCategory, "gabinete">, SlotConfig> = {
     size: mmSize(50, 150, 40),
   },
 
-  // Disipador: arriba del CPU, sobresale hacia adelante.
+  // Disipador: arriba del CPU, sobresale hacia adelante. Y bajado
+  // (1.95 → 1.6) para que el cooler no quede tocando el techo del
+  // gabinete. La base del cooler queda apoyada sobre el CPU.
   disipador: {
-    position: [-0.5, 1.95, -0.5],
+    position: [-0.5, 1.6, -0.5],
     size: mmSize(170, 180, 170),
   },
 
   // GPU: zona inferior del MB (PCIe), sobresale hacia adelante.
+  // Slot ampliado (330→370mm ancho, 160→190mm alto, 100→120mm prof)
+  // para que las GPU chicas (4060, 1660) se escalen MÁS hacia arriba
+  // y queden visualmente similares a la 5090, en lugar de verse
+  // chiquitas. Las proporciones del modelo se mantienen porque
+  // FittedModel preserva aspect; solo crece el factor de escala.
   gpu: {
     position: [0, -0.8, -0.5],
-    size: mmSize(330, 160, 100),
+    size: mmSize(370, 190, 120),
   },
 
   // Disco (M.2 NVMe): apoyado sobre la motherboard, entre CPU y GPU.

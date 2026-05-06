@@ -44,6 +44,10 @@ type GltfModelProps = {
   // Override manual: si lo pasás, ignora la heurística y usa exactamente
   // estos valores. Útil cuando el auto-detect no acierta.
   rotation?: Vec3;
+  // Si false, NO reproduce las animaciones embebidas del .glb. Útil
+  // para modelos con animaciones rotas (ej. skeletal/skinning malo)
+  // donde reproducirlas deforma la geometría. Default: true.
+  animationsEnabled?: boolean;
 };
 
 // Heurística: dado un modelo y su categoría, devuelve la rotación que
@@ -106,7 +110,12 @@ function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
   }
 }
 
-export function GltfModel({ url, category, rotation }: GltfModelProps) {
+export function GltfModel({
+  url,
+  category,
+  rotation,
+  animationsEnabled = true,
+}: GltfModelProps) {
   // useGLTF nos da la escena Y las animaciones (si el .glb las trae).
   const { scene, animations } = useGLTF(url);
 
@@ -138,14 +147,17 @@ export function GltfModel({ url, category, rotation }: GltfModelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, category, rotKey]);
 
-  // Atamos las animaciones al sceneClone. Drei se encarga de crear el
-  // AnimationMixer y updatearlo en cada frame.
-  const { actions } = useAnimations(animations, transformed.sceneClone);
+  // Atamos las animaciones al sceneClone. Si están deshabilitadas,
+  // pasamos un array vacío para que el mixer no tenga nada que hacer
+  // (cero overhead). Drei updatea el mixer en cada frame automáticamente.
+  const effectiveAnimations = animationsEnabled ? animations : [];
+  const { actions } = useAnimations(effectiveAnimations, transformed.sceneClone);
 
   // Reproducimos TODAS las animaciones del modelo en loop infinito.
   // Si el .glb no trae animaciones (la mayoría de los componentes de
   // PC), `actions` es un objeto vacío y el effect no hace nada.
   useEffect(() => {
+    if (!animationsEnabled) return;
     if (!animations || animations.length === 0) return;
 
     const playing = Object.values(actions).filter(
@@ -166,7 +178,7 @@ export function GltfModel({ url, category, rotation }: GltfModelProps) {
     return () => {
       playing.forEach((action) => action.stop());
     };
-  }, [actions, animations]);
+  }, [actions, animations, animationsEnabled]);
 
   return <primitive object={transformed.root} />;
 }

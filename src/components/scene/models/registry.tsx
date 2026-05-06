@@ -41,20 +41,27 @@ export type ModelComponent = ComponentType;
 
 // Helper para registrar un .glb. Construye la URL con la convención
 // de carpetas y le pasa la categoría al GltfModel para que dispare
-// la auto-orientación. Si el modelo necesita una rotación manual, se
-// pasa por `options.rotation` y eso pisa la heurística.
+// la auto-orientación. Opciones:
+//   - rotation: pisa la heurística de auto-orient.
+//   - animations: false para deshabilitar animaciones embebidas
+//     (útil si están rotas y deforman el modelo).
 export function gltfFor(
   category: PCCategory,
   modelId: string,
-  options?: { rotation?: Vec3 }
+  options?: { rotation?: Vec3; animations?: boolean }
 ): ModelComponent {
   const url = `/models/${category}/${modelId}.glb`;
-  // Memoizamos los valores en variables para que el componente devuelto
-  // siempre les pase la misma referencia y useMemo en GltfModel no
-  // invalide en cada render.
+  // Memoizamos los valores fuera del componente para que useMemo en
+  // GltfModel no invalide en cada render del padre.
   const rotation = options?.rotation;
+  const animationsEnabled = options?.animations ?? true;
   const Model: ModelComponent = () => (
-    <GltfModel url={url} category={category} rotation={rotation} />
+    <GltfModel
+      url={url}
+      category={category}
+      rotation={rotation}
+      animationsEnabled={animationsEnabled}
+    />
   );
   Model.displayName = `Gltf(${modelId})`;
   return Model;
@@ -95,7 +102,12 @@ const MODEL_REGISTRY: Record<string, ModelComponent> = {
   "gpu-rtx-2080-fe": gltfFor("gpu", "gpu-rtx-2080-fe"),
   "gpu-rtx-3080-fe": gltfFor("gpu", "gpu-rtx-3080-fe"),
   "gpu-rtx-3090": gltfFor("gpu", "gpu-rtx-3090"),
-  "gpu-rtx-4060-gigabyte": gltfFor("gpu", "gpu-rtx-4060-gigabyte"),
+  // El modelo de la 4060 tiene animaciones malformadas (skeleton roto)
+  // que deforman la geometría y la hacen rotar sobre sí misma. Las
+  // deshabilitamos puntualmente para este SKU.
+  "gpu-rtx-4060-gigabyte": gltfFor("gpu", "gpu-rtx-4060-gigabyte", {
+    animations: false,
+  }),
   "gpu-rtx-4090-fe": gltfFor("gpu", "gpu-rtx-4090-fe"),
   "gpu-rtx-5090-fe": gltfFor("gpu", "gpu-rtx-5090-fe"),
 
