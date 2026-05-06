@@ -141,7 +141,14 @@ export function PCScene() {
               label={`${category}:${compId}`}
             >
               <group position={slot.position} rotation={slot.rotation}>
-                <FittedModel targetSize={slot.size}>
+                <FittedModel
+                  targetSize={slot.size}
+                  // Cada slot decide si preserva proporciones (default true)
+                  // o si se estira por eje (motherboard, false). Esto permite
+                  // tener componentes con dimensiones predecibles cuando
+                  // hace falta sin tocar el resto del sistema.
+                  preserveAspect={slot.preserveAspect ?? true}
+                >
                   <Model />
                 </FittedModel>
               </group>

@@ -3,37 +3,32 @@
 // ARQUITECTURA DEL SISTEMA DE TAMAÑO Y POSICIÓN
 // ==============================================
 //
-// 1) ESCALA DE REFERENCIA (`MM_PER_UNIT`)
-//    1 unidad de la escena = 100 mm reales. Permite expresar el `size`
-//    de cada slot a partir de DIMENSIONES REALES, así los componentes
-//    mantienen proporciones realistas entre sí.
+// 1) GABINETE (`CHASSIS_BOUNDS`)
+//    Todo gabinete se normaliza a [4, 6, 4] con
+//    `<FittedModel preserveAspect={false}>` en PCScene. El chassis
+//    siempre ocupa el mismo volumen, así los slots interiores tienen
+//    coordenadas confiables.
 //
-// 2) GABINETE (`CHASSIS_BOUNDS`)
-//    Todo gabinete se normaliza a [4, 6, 4] (~ 400×600×400 mm) con
-//    `<FittedModel preserveAspect={false}>`. Sin importar el case que
-//    cargues, ocupa el mismo volumen visual y los slots interiores
-//    siempre apuntan al mismo lugar.
+// 2) MOTHERBOARD: TAMAÑO FIJO (NON-UNIFORM SCALED)
+//    El motherboard también usa `preserveAspect: false`. Sin esto,
+//    `FittedModel` lo escala uniformemente y la profundidad (Z) varía
+//    según el modelo .glb — modelos que incluyen capacitores grandes
+//    pueden hacer que la motherboard atraviese la pared trasera del
+//    chassis. Con `preserveAspect: false`, el motherboard SIEMPRE mide
+//    [3.2, 4.5, 0.3] y su cara frontal SIEMPRE está en Z=-1.35.
+//    Eso permite anclar CPU/RAM/disco a Z=-1.25 con precisión.
 //
-// 3) MOTHERBOARD: HAND-TUNED, NO MM
-//    La motherboard es la EXCEPCIÓN al sistema mm: la dimensiono a mano
-//    para que ocupe ~80% del chassis (visualmente parece "la pared del
-//    fondo del case"). Si la dejara en sus 244×305 mm reales, se vería
-//    chica vs el chassis (~60% de ancho). Como el chassis se estira
-//    no-uniforme a [4,6,4], la noción de "1 mm real" pierde sentido para
-//    la pieza que define el plano de fondo.
+// 3) RESTO DE COMPONENTES INTERIORES
+//    `preserveAspect: true` (default) — escala uniforme, mantienen
+//    proporciones realistas. Las dimensiones se expresan en mm reales
+//    via `mmSize()` para que motherboard/CPU/RAM/etc. sean
+//    proporcionales entre sí.
 //
-// 4) RESTO DE COMPONENTES: MM REALES
-//    Los demás van con mmSize() basado en specs estándar. Como el slot.z
-//    es generoso (los modelos .glb suelen tener bbox.z mucho mayor que
-//    el espesor real por incluir conectores y disipadores), el modelo
-//    no queda Z-limitado y se ve a tamaño correcto.
-//
-// 5) ANCLAJE A LA MOTHERBOARD
-//    CPU, RAM y DISCO van apoyados sobre la motherboard (Z = -1.0,
-//    apenas adelante del plano de la mb que está en Z = -1.65).
-//    El disco se posiciona como un M.2 NVMe horizontal (slot pequeño y
-//    chato). El disipador y la GPU quedan más adelantados porque
-//    sobresalen del plano del MB.
+// 4) ANCLAJE A LA MOTHERBOARD
+//    CPU, RAM y disco van apoyados sobre la motherboard a `Z = ON_MB_Z
+//    = -1.25`, justo 0.1 unidades adelante del frente del MB (-1.35).
+//    Como el MB tiene tamaño fijo, este ancle FUNCIONA sin importar
+//    qué modelo de motherboard se haya seleccionado.
 
 import type { PCCategory } from "@/types";
 
@@ -49,58 +44,59 @@ export type SlotConfig = {
   position: Vec3;
   rotation?: Vec3;
   size: Vec3;
+  // Si false, el modelo se estira por eje para llenar `size`. Si true
+  // (default), se escala uniformemente manteniendo proporciones.
+  preserveAspect?: boolean;
 };
 
-// Posición Z del centro de la motherboard.
-const MB_Z = -1.65;
+// Centro Z del motherboard. Movido adelante respecto al fondo del
+// chassis (Z=-2) para que ningún modelo lo atraviese.
+const MB_Z = -1.5;
 
-// Posición Z para componentes apoyados sobre la motherboard.
-// Apenas adelante del plano del MB (-1.65) para evitar superposición
-// con los capacitores que sobresalen del PCB en los modelos reales.
-const ON_MB_Z = -1.0;
+// Z para componentes apoyados sobre la motherboard. La cara frontal
+// del motherboard está en Z=-1.5 + 0.15 = -1.35; ON_MB_Z=-1.25 los
+// pone 0.1 unidades adelante, visualmente "encastrados".
+const ON_MB_Z = -1.25;
 
 export const SLOTS: Record<Exclude<PCCategory, "gabinete">, SlotConfig> = {
-  // Motherboard: HAND-TUNED, ~80% del chassis. Domina la pared del fondo.
+  // Motherboard: TAMAÑO FIJO, NON-UNIFORM. Ocupa ~80% del chassis.
   motherboard: {
     position: [0, 0, MB_Z],
-    size: [3.2, 4.5, 1.2],
+    size: [3.2, 4.5, 0.3],
+    preserveAspect: false,
   },
 
-  // CPU: socket en la zona superior-izquierda del MB.
-  // Slot pequeño (cube ~60mm) para que el chip se vea chico vs la mb.
+  // CPU: zona superior-izquierda del MB, apoyado.
   cpu: {
     position: [-0.5, 0.8, ON_MB_Z],
     size: mmSize(60, 60, 60),
   },
 
-  // RAM: kit de 2 sticks, JUSTO al lado del CPU socket.
-  // Distancia X de 0.7 al CPU para que se vean "encastrados" próximos.
+  // RAM: justo a la derecha del CPU, apoyada.
   ram: {
-    position: [0.2, 0.8, ON_MB_Z],
+    position: [0.3, 0.8, ON_MB_Z],
     size: mmSize(50, 150, 40),
   },
 
-  // Disipador: arriba del CPU. Sticks adelantado en Z.
+  // Disipador: arriba del CPU, sobresale hacia adelante.
   disipador: {
-    position: [-0.5, 2.0, -0.3],
+    position: [-0.5, 1.95, -0.5],
     size: mmSize(170, 180, 170),
   },
 
-  // GPU: parte inferior del MB (zona PCIe). Sticks adelantado.
+  // GPU: zona inferior del MB (PCIe), sobresale hacia adelante.
   gpu: {
-    position: [0, -1.0, -0.5],
+    position: [0, -0.8, -0.5],
     size: mmSize(330, 160, 100),
   },
 
-  // Disco: como un M.2 NVMe horizontal apoyado sobre la motherboard.
-  // Slot CHATO (Z=10mm) para que el modelo quede flat sobre el PCB.
-  // Posición típica: entre el CPU socket y la PCIe.
+  // Disco (M.2 NVMe): apoyado sobre la motherboard, entre CPU y GPU.
   disco: {
     position: [0.2, 0.1, ON_MB_Z],
     size: mmSize(100, 30, 10),
   },
 
-  // Fuente: abajo del case, bahía estándar ATX.
+  // Fuente: parte inferior del chassis.
   fuente: {
     position: [-0.5, -2.5, -0.7],
     size: mmSize(160, 110, 160),

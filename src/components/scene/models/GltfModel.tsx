@@ -84,6 +84,16 @@ function detectAutoRotation(scene: Object3D, category: PCCategory): Vec3 {
       if (size.x < size.y) return [0, Math.PI / 2, 0];
       return [Math.PI / 2, 0, 0];
     }
+    case "cpu": {
+      // CPU: Z debe ser el eje más chico (chip plano), igual que el
+      // motherboard. Esto pone la IHS (cara superior con el logo)
+      // mirando hacia el viewer en lugar de hacia el techo. Sin este
+      // auto-orient, los modelos vienen con IHS al +Y (chip "sobre una
+      // mesa") y se ven como un cubo flotando con la cara mirando arriba.
+      if (size.z <= size.x && size.z <= size.y) return [0, 0, 0];
+      if (size.x < size.y) return [0, Math.PI / 2, 0];
+      return [Math.PI / 2, 0, 0];
+    }
     case "disco": {
       // Disco apoyado sobre el motherboard como M.2: X debe ser el
       // más largo (long axis horizontal). Si viene parado o de costado,
