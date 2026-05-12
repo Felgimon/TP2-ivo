@@ -6,10 +6,6 @@
 //       · Izquierda (selector): tabs + lista de componentes.
 //       · Derecha (resumen): build actual + total + Guardar / Reset.
 //   - Hint discreto en la parte inferior central que se desvanece solo.
-//
-// El Canvas se lazy-loadea con `dynamic({ ssr: false })` porque R3F y
-// drei tocan APIs del navegador (window, WebGL) que no existen en el
-// servidor de Next.js. Si lo importamos directo, falla la build.
 
 "use client";
 
@@ -24,9 +20,8 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { FavoritesModal } from "@/components/builder/FavoritesModal";
 import { useAuthStore } from "@/store/authStore";
 import { useHydrated } from "@/hooks/useHydrated";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-// Carga del Canvas 3D solo en cliente (sin SSR).
-// Mientras se carga, mostramos un fondo oscuro.
 const PCScene = dynamic(
   () => import("@/components/scene/PCScene").then((m) => m.PCScene),
   {
@@ -37,8 +32,6 @@ const PCScene = dynamic(
   }
 );
 
-// Hint discreto que recuerda que se puede arrastrar para girar la vista.
-// Aparece al cargar la página y se va solo después de 6 segundos.
 function DragHint() {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
@@ -53,7 +46,8 @@ function DragHint() {
           animate={{ opacity: 0.5, y: 0 }}
           exit={{ opacity: 0, y: 6 }}
           transition={{ duration: 0.6 }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[11px] tracking-wide text-white/60 pointer-events-none select-none"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[11px] tracking-wide pointer-events-none select-none"
+          style={{ color: "var(--hint)" }}
         >
           ↻ arrastrá para girar · scroll para zoom
         </motion.div>
@@ -62,8 +56,6 @@ function DragHint() {
   );
 }
 
-// Botón "Favoritos" del header. Solo aparece cuando hay un usuario
-// logueado (no tiene sentido mostrarlo si nadie está autenticado).
 function FavoritesButton() {
   const hydrated = useHydrated();
   const currentUserId = useAuthStore((s) => s.currentUserId);
@@ -75,7 +67,11 @@ function FavoritesButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-sm text-white/70 hover:text-white px-3 py-2 rounded-full border border-white/10 hover:border-white/30 transition-colors cursor-pointer"
+        className="text-sm px-3 py-2 rounded-full transition-colors cursor-pointer"
+        style={{
+          color: "var(--text-muted)",
+          border: "1px solid var(--panel-border)",
+        }}
       >
         ★ Favoritos
       </button>
@@ -86,25 +82,35 @@ function FavoritesButton() {
 
 export default function Home() {
   return (
-    <div className="fixed inset-0 overflow-hidden bg-zinc-950 text-white">
+    <div
+      className="fixed inset-0 overflow-hidden"
+      style={{ background: "var(--bg)", color: "var(--text)" }}
+    >
       {/* ---------- ESCENA 3D (fondo) ---------- */}
       <div className="absolute inset-0">
         <PCScene />
       </div>
 
-      {/* Hint discreto abajo y centrado */}
       <DragHint />
 
       {/* ---------- HEADER ---------- */}
       <header className="absolute top-0 left-0 right-0 z-10 px-8 py-5 flex items-center justify-between pointer-events-none">
         <div className="pointer-events-auto">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/40">
+          <div
+            className="text-xs uppercase tracking-[0.2em]"
+            style={{ color: "var(--text-muted)" }}
+          >
             PC Builder
           </div>
-          <h1 className="text-xl font-semibold text-white">Armá tu PC ideal</h1>
+          <h1
+            className="text-xl font-semibold"
+            style={{ color: "var(--text)" }}
+          >
+            Armá tu PC ideal
+          </h1>
         </div>
-        {/* Cluster de la derecha: Favoritos + UserMenu */}
         <div className="pointer-events-auto flex items-center gap-3">
+          <ThemeToggle />
           <FavoritesButton />
           <UserMenu />
         </div>
@@ -113,10 +119,22 @@ export default function Home() {
       {/* ---------- PANEL IZQUIERDO: SELECTOR ---------- */}
       <div className="absolute left-0 top-0 bottom-0 z-10 p-6 pt-20 pb-8 flex pointer-events-none">
         <div className="w-[420px] max-w-[90vw] flex flex-col gap-4 pointer-events-auto">
-          <div className="rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-4">
+          <div
+            className="rounded-2xl backdrop-blur-xl p-4"
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--panel-border)",
+            }}
+          >
             <CategoryTabs />
           </div>
-          <div className="rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-4 flex-1 overflow-y-auto">
+          <div
+            className="rounded-2xl backdrop-blur-xl p-4 flex-1 overflow-y-auto"
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--panel-border)",
+            }}
+          >
             <ComponentList />
           </div>
         </div>
@@ -125,7 +143,13 @@ export default function Home() {
       {/* ---------- PANEL DERECHO: RESUMEN ---------- */}
       <div className="absolute right-0 top-0 bottom-0 z-10 p-6 pt-20 pb-8 flex pointer-events-none">
         <div className="w-[320px] max-w-[90vw] pointer-events-auto">
-          <div className="rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-5 h-full">
+          <div
+            className="rounded-2xl backdrop-blur-xl p-5 h-full"
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--panel-border)",
+            }}
+          >
             <BuildSummary />
           </div>
         </div>
