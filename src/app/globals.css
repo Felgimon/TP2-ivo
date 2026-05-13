@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-/* Variables por tema */
+/* Variables por tema.
+   `--fg-rgb` es un TRIPLET RGB (sin alpha) para que Tailwind v4 pueda
+   inyectar el modificador de opacidad (`text-fg/50` → alpha 0.5).
+   Las demás variables son colores resueltos para usar en inline
+   styles (sin alpha-modifier de Tailwind). */
 [data-theme="dark"], :root {
   --bg: #0f0f11;
   --panel: rgba(0, 0, 0, 0.40);
@@ -8,6 +12,8 @@
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.50);
   --hint: rgba(255, 255, 255, 0.60);
+  --modal-bg: #18181b;
+  --fg-rgb: 255 255 255;
 }
 
 [data-theme="light"] {
@@ -17,9 +23,16 @@
   --text: #111118;
   --text-muted: rgba(0, 0, 0, 0.50);
   --hint: rgba(0, 0, 0, 0.45);
+  --modal-bg: #f4f4f5;
+  --fg-rgb: 17 17 24;
 }
 
+/* Registramos `fg` como color Tailwind. Sintaxis con `<alpha-value>`
+   le dice a Tailwind cómo inyectar la opacidad al usar el modificador
+   `/50`, `/70`, etc. Así `text-fg`, `text-fg/50`, `bg-fg/5`,
+   `border-fg/10`, etc. se vuelven utilidades que respetan el tema. */
 @theme inline {
+  --color-fg: rgb(var(--fg-rgb) / <alpha-value>);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

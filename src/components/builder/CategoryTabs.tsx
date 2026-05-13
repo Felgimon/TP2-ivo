@@ -33,13 +33,13 @@ export function CategoryTabs() {
             {isActive && (
               <motion.span
                 layoutId="active-tab-pill"
-                className="absolute inset-0 rounded-full bg-white/10 ring-1 ring-white/30"
+                className="absolute inset-0 rounded-full bg-fg/10 ring-1 ring-fg/30"
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
             <span
               className={`relative z-10 ${
-                isActive ? "text-white" : "text-white/60 hover:text-white/90"
+                isActive ? "text-fg" : "text-fg/60 hover:text-fg/90"
               }`}
             >
               {CATEGORY_LABELS[cat]}

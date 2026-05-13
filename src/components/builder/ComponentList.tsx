@@ -45,19 +45,19 @@ export function ComponentList() {
                 className={`text-left p-4 rounded-xl border transition-all cursor-pointer ${
                   isSelected
                     ? "border-emerald-400/70 bg-emerald-400/10"
-                    : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10"
+                    : "border-fg/10 bg-fg/5 hover:border-fg/30 hover:bg-fg/10"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-white/50">
+                    <div className="text-xs uppercase tracking-wider text-fg/50">
                       {comp.brand}
                     </div>
-                    <div className="text-sm font-medium text-white mt-0.5">
+                    <div className="text-sm font-medium text-fg mt-0.5">
                       {comp.name}
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-white/90 whitespace-nowrap">
+                  <div className="text-sm font-semibold text-fg/90 whitespace-nowrap">
                     ${comp.price}
                   </div>
                 </div>
@@ -67,7 +67,7 @@ export function ComponentList() {
                     {Object.entries(comp.specs).map(([k, v]) => (
                       <span
                         key={k}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/70"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-fg/5 text-fg/70"
                       >
                         {k}: {v}
                       </span>

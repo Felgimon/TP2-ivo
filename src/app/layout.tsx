@@ -35,7 +35,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-zinc-950 text-white">{children}</body>
+      {/* Sin classes de color en el body: el background/text los pone
+          `globals.css` via variables CSS (`--bg`, `--text`) que cambian
+          según `data-theme`. Si pusiéramos `bg-zinc-950 text-white` acá,
+          Tailwind generaría reglas más específicas que pisarían las
+          variables y el modo claro no se vería. */}
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

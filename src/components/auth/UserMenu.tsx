@@ -52,11 +52,11 @@ export function UserMenu() {
         <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-sm font-semibold">
           {user.username.charAt(0).toUpperCase()}
         </div>
-        <span className="text-sm text-white/80">{user.username}</span>
+        <span className="text-sm text-fg/80">{user.username}</span>
       </div>
       <button
         onClick={logout}
-        className="text-xs text-white/50 hover:text-white/80 transition-colors cursor-pointer"
+        className="text-xs text-fg/50 hover:text-fg/80 transition-colors cursor-pointer"
       >
         Salir
       </button>

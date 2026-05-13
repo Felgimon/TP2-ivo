@@ -56,10 +56,10 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
         // Estado vacío: cuando todavía no guardó nada.
         <div className="text-center py-10">
           <div className="text-4xl mb-3 opacity-40">★</div>
-          <p className="text-white/60 text-sm">
+          <p className="text-fg/60 text-sm">
             Todavía no guardaste ningún build.
           </p>
-          <p className="text-white/40 text-xs mt-1">
+          <p className="text-fg/40 text-xs mt-1">
             Armá uno y tocá "Guardar" para tenerlo a mano.
           </p>
         </div>
@@ -71,18 +71,18 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
             return (
               <li
                 key={sb.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
+                className="rounded-xl border border-fg/10 bg-fg/5 p-4"
               >
                 {/* Encabezado: nombre + fecha + acciones */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-white font-medium truncate">{sb.name}</h4>
-                    <div className="text-xs text-white/40 mt-0.5">
+                    <h4 className="text-fg font-medium truncate">{sb.name}</h4>
+                    <div className="text-xs text-fg/40 mt-0.5">
                       {new Date(sb.createdAt).toLocaleString("es-AR")}
                       {" · "}
                       {filled} pieza{filled === 1 ? "" : "s"}
                       {" · "}
-                      <span className="text-white/60 font-medium">
+                      <span className="text-fg/60 font-medium">
                         ${total.toLocaleString()}
                       </span>
                     </div>
@@ -96,7 +96,7 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
                     </button>
                     <button
                       onClick={() => deleteBuild(sb.id)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-white/60 hover:text-red-300 hover:border-red-400/40 transition-colors cursor-pointer"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-fg/10 text-fg/60 hover:text-red-300 hover:border-red-400/40 transition-colors cursor-pointer"
                     >
                       Eliminar
                     </button>
@@ -112,18 +112,18 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
                         key={cat}
                         className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-black/20"
                       >
-                        <span className="text-white/40 w-20 shrink-0">
+                        <span className="text-fg/40 w-20 shrink-0">
                           {CATEGORY_LABELS[cat]}
                         </span>
                         <span
                           className={`flex-1 truncate ${
-                            comp ? "text-white/90" : "text-white/30 italic"
+                            comp ? "text-fg/90" : "text-fg/30 italic"
                           }`}
                         >
                           {comp?.name ?? "—"}
                         </span>
                         {comp && (
-                          <span className="text-white/50">${comp.price}</span>
+                          <span className="text-fg/50">${comp.price}</span>
                         )}
                       </li>
                     );

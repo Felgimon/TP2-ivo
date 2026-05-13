@@ -62,7 +62,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     <Modal open={open} onClose={handleClose} title={title}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5">
+          <label className="block text-xs uppercase tracking-wider text-fg/50 mb-1.5">
             Usuario
           </label>
           <input
@@ -71,13 +71,13 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setUsername(e.target.value)}
             autoFocus
             required
-            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-emerald-400/60"
+            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg placeholder-fg/30 focus:outline-none focus:border-emerald-400/60"
             placeholder="tu_usuario"
           />
         </div>
 
         <div>
-          <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5">
+          <label className="block text-xs uppercase tracking-wider text-fg/50 mb-1.5">
             Contraseña
           </label>
           <input
@@ -85,7 +85,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-emerald-400/60"
+            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg placeholder-fg/30 focus:outline-none focus:border-emerald-400/60"
             placeholder="••••••••"
           />
         </div>
@@ -107,7 +107,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         <button
           type="button"
           onClick={switchMode}
-          className="w-full text-xs text-white/50 hover:text-white/80 transition-colors cursor-pointer"
+          className="w-full text-xs text-fg/50 hover:text-fg/80 transition-colors cursor-pointer"
         >
           {switchLabel}
         </button>

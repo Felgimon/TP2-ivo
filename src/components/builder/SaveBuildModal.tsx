@@ -42,7 +42,7 @@ export function SaveBuildModal({ open, onClose }: SaveBuildModalProps) {
     <Modal open={open} onClose={onClose} title="Guardar build">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs uppercase tracking-wider text-white/50 mb-1.5">
+          <label className="block text-xs uppercase tracking-wider text-fg/50 mb-1.5">
             Nombre del build
           </label>
           <input
@@ -50,7 +50,7 @@ export function SaveBuildModal({ open, onClose }: SaveBuildModalProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
-            className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-400/60"
+            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg focus:outline-none focus:border-emerald-400/60"
             placeholder="Mi PC para gaming"
           />
         </div>
@@ -59,7 +59,7 @@ export function SaveBuildModal({ open, onClose }: SaveBuildModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 rounded-lg border border-white/10 text-white/70 hover:bg-white/5 transition-colors cursor-pointer"
+            className="flex-1 py-2 rounded-lg border border-fg/10 text-fg/70 hover:bg-fg/5 transition-colors cursor-pointer"
           >
             Cancelar
           </button>

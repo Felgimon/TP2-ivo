@@ -51,7 +51,6 @@ export function ThemeToggle() {
           </motion.span>
         )}
       </AnimatePresence>
-      {theme === "dark" ? "Modo claro" : "Modo oscuro"}
     </button>
   );
 }
