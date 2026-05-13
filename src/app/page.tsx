@@ -12,6 +12,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 import { CategoryTabs } from "@/components/builder/CategoryTabs";
 import { ComponentList } from "@/components/builder/ComponentList";
@@ -65,15 +66,27 @@ function FavoritesButton() {
 
   return (
     <>
+      {/* Mismas dimensiones/estética que el ThemeToggle: solo el ícono
+          de estrella, padding y radius idénticos para que ambos botones
+          queden visualmente alineados en el header. */}
       <button
         onClick={() => setOpen(true)}
-        className="text-sm px-3 py-2 rounded-full transition-colors cursor-pointer"
+        aria-label="Mis favoritos"
         style={{
-          color: "var(--text-muted)",
+          display: "flex",
+          alignItems: "center",
+          padding: "6px 14px",
+          background: "var(--panel)",
           border: "1px solid var(--panel-border)",
+          borderRadius: "999px",
+          color: "var(--text-muted)",
+          cursor: "pointer",
+          fontSize: "13px",
+          backdropFilter: "blur(12px)",
+          transition: "all 0.2s",
         }}
       >
-        ★ Favoritos
+        <Star size={14} />
       </button>
       <FavoritesModal open={open} onClose={() => setOpen(false)} />
     </>
