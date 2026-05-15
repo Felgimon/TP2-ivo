@@ -34,8 +34,13 @@ export function SaveBuildModal({ open, onClose }: SaveBuildModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUserId) return;
-    saveBuild(currentUserId, name, build);
-    onClose();
+    
+    // saveBuild es ahora async, así que lo manejamos con .then()
+    saveBuild(currentUserId, name, build).then((result) => {
+      if (result) {
+        onClose();
+      }
+    });
   };
 
   return (

@@ -21,6 +21,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { FavoritesModal } from "@/components/builder/FavoritesModal";
 import { useAuthStore } from "@/store/authStore";
 import { useHydrated } from "@/hooks/useHydrated";
+import { useSupabaseSync } from "@/hooks/useSupabaseSync";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const PCScene = dynamic(
@@ -94,6 +95,8 @@ function FavoritesButton() {
 }
 
 export default function Home() {
+  useSupabaseSync();
+  
   return (
     <div
       className="fixed inset-0 overflow-hidden"

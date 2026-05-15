@@ -44,13 +44,20 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const result = mode === "login" ? login(username, password) : register(username, password);
-    if (result.ok) {
-      reset();
-      onClose();
-    } else {
-      setError(result.error);
-    }
+    
+    const operation = mode === "login" ? login(username, password) : register(username, password);
+    
+    // Manejar promesa async
+    operation.then((result) => {
+      if (result.ok) {
+        reset();
+        onClose();
+      } else {
+        setError(result.error);
+      }
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    });
   };
 
   const title = mode === "login" ? "Iniciar sesión" : "Crear cuenta";

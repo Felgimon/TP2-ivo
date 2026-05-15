@@ -95,7 +95,7 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
                       Cargar
                     </button>
                     <button
-                      onClick={() => deleteBuild(sb.id)}
+                      onClick={() => deleteBuild(sb.id).catch((err) => console.error(err))}
                       className="text-xs px-3 py-1.5 rounded-lg border border-fg/10 text-fg/60 hover:text-red-300 hover:border-red-400/40 transition-colors cursor-pointer"
                     >
                       Eliminar

@@ -55,7 +55,7 @@ export function UserMenu() {
         <span className="text-sm text-fg/80">{user.username}</span>
       </div>
       <button
-        onClick={logout}
+        onClick={() => logout()}
         className="text-xs text-fg/50 hover:text-fg/80 transition-colors cursor-pointer"
       >
         Salir
