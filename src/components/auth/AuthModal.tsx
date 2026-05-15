@@ -71,7 +71,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setUsername(e.target.value)}
             autoFocus
             required
-            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg placeholder-fg/30 focus:outline-none focus:border-emerald-400/60"
+            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg focus:outline-none focus:border-emerald-400/60"
             placeholder="tu_usuario"
           />
         </div>
@@ -85,7 +85,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg placeholder-fg/30 focus:outline-none focus:border-emerald-400/60"
+            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg focus:outline-none focus:border-emerald-400/60"
             placeholder="••••••••"
           />
         </div>
