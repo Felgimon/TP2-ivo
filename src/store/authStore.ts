@@ -78,13 +78,18 @@ export const useAuthStore = create<AuthState>()(
             return { ok: false, error: "Ese nombre de usuario ya está en uso" };
           }
 
-          // Crear usuario en Supabase
+          // Crear usuario en Supabase.
+          // OJO: hacemos password.trim() para evitar que se cuelen
+          // espacios/caracteres invisibles del autocomplete del browser
+          // o del password manager. Si no, podés terminar con un password
+          // "formidable123 " (con espacio al final) en la BD y después
+          // el login falla porque comparás contra "formidable123".
           const { data, error } = await supabase
             .from("users")
             .insert([
               {
                 username: cleanUsername,
-                password,
+                password: password.trim(),
               },
             ])
             .select()
@@ -144,9 +149,21 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // En producción la comparación sería contra un hash (bcrypt).
-          // Por ahora comparamos texto plano — la columna `password` de
-          // la tabla guarda lo que se insertó tal cual.
-          if (data.password !== password) {
+          // Por ahora comparamos texto plano.
+          // Trim en ambos lados para evitar problemas con espacios o
+          // caracteres invisibles que el autocomplete del browser
+          // suele meter (sobre todo en mobile). Si las longitudes
+          // difieren después del trim, mostramos esa info para ayudar
+          // a debugear — útil para diagnosticar exactamente este caso.
+          const storedPass = data.password.trim();
+          const inputPass = password.trim();
+          if (storedPass !== inputPass) {
+            if (storedPass.length !== inputPass.length) {
+              return {
+                ok: false,
+                error: `Contraseña incorrecta (longitud guardada: ${storedPass.length}, tipeada: ${inputPass.length})`,
+              };
+            }
             return { ok: false, error: "Contraseña incorrecta" };
           }
 

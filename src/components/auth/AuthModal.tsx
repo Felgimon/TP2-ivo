@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useAuthStore } from "@/store/authStore";
 
@@ -19,15 +20,21 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [mode, setMode] = useState<Mode>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  // Toggle del ojito: si está en true mostramos el password en texto
+  // plano (input type="text"), si no lo escondemos con bullets.
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
 
   // Limpia el formulario al cerrar el modal o cambiar de modo.
+  // Resetea también el toggle del ojito, para que la próxima vez que
+  // se abra el modal arranque oculto.
   const reset = () => {
     setUsername("");
     setPassword("");
+    setShowPassword(false);
     setError(null);
   };
 
@@ -87,14 +94,32 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           <label className="block text-xs uppercase tracking-wider text-fg/50 mb-1.5">
             Contraseña
           </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-3 py-2 rounded-lg bg-fg/5 border border-fg/10 text-fg focus:outline-none focus:border-emerald-400/60"
-            placeholder="••••••••"
-          />
+          {/* Wrapper relativo: el input es full-width y el botón del
+              ojito se posiciona absoluto a la derecha, dentro del input.
+              El pr-10 del input le deja espacio al botón para que no
+              tape el texto que tipea el usuario. */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 pr-10 rounded-lg bg-fg/5 border border-fg/10 text-fg focus:outline-none focus:border-emerald-400/60"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              // tabIndex={-1} para que el Tab del teclado no caiga acá
+              // entre el input y el botón submit — es un control auxiliar,
+              // no parte del flujo principal del form.
+              tabIndex={-1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-fg/40 hover:text-fg/80 hover:bg-fg/5 transition-colors cursor-pointer"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </div>
 
         {/* Mensaje de error: solo si lo hay. */}
