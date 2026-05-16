@@ -60,14 +60,21 @@ export const useAuthStore = create<AuthState>()(
             return { ok: false, error: "La contraseña debe tener al menos 4 caracteres" };
           }
 
-          // Verificar que el usuario no existe
+          // Chequear si el usuario ya existe. Usamos maybeSingle() en vez
+          // de single() porque maybeSingle devuelve data:null sin error
+          // cuando no hay fila — más limpio que tener que distinguir un
+          // PGRST116 ("no rows") de un error real de red o permisos.
           const { data: existing, error: checkError } = await supabase
             .from("users")
             .select("id")
             .eq("username", cleanUsername)
-            .single();
+            .maybeSingle();
 
-          if (!checkError && existing) {
+          if (checkError) {
+            return { ok: false, error: `Error de conexión: ${checkError.message}` };
+          }
+
+          if (existing) {
             return { ok: false, error: "Ese nombre de usuario ya está en uso" };
           }
 
@@ -116,26 +123,31 @@ export const useAuthStore = create<AuthState>()(
       login: async (username, password) => {
         set({ isLoading: true });
         try {
+          // maybeSingle() en vez de single(): devuelve null sin error
+          // cuando no hay fila. Así podemos diferenciar "no existe ese
+          // usuario" de "falló la query por otra razón".
           const { data, error } = await supabase
             .from("users")
             .select("*")
             .eq("username", username.trim())
-            .single();
+            .maybeSingle();
 
-          if (error || !data) {
-            return {
-              ok: false,
-              error: "Usuario o contraseña incorrectos",
-            };
+          // Error real de Supabase (red, permisos, RLS, schema mal, etc).
+          // Antes esto se tragaba como "credenciales incorrectas" y era
+          // imposible debugear. Ahora se muestra tal cual.
+          if (error) {
+            return { ok: false, error: `Error de conexión: ${error.message}` };
           }
 
-          // En producción, la contraseña estaría hasheada en BD
-          // Por ahora, comparamos directamente
+          if (!data) {
+            return { ok: false, error: "Usuario no encontrado" };
+          }
+
+          // En producción la comparación sería contra un hash (bcrypt).
+          // Por ahora comparamos texto plano — la columna `password` de
+          // la tabla guarda lo que se insertó tal cual.
           if (data.password !== password) {
-            return {
-              ok: false,
-              error: "Usuario o contraseña incorrectos",
-            };
+            return { ok: false, error: "Contraseña incorrecta" };
           }
 
           const user: User = {
@@ -144,7 +156,17 @@ export const useAuthStore = create<AuthState>()(
             createdAt: new Date(data.created_at).getTime(),
           };
 
-          set({ currentUserId: user.id });
+          // OJO: además de marcar currentUserId, agregamos el usuario al
+          // array `users` si no estaba (típico caso: browser nuevo o
+          // modo incógnito, donde el localStorage está vacío). Sin esto,
+          // UserMenu y getCurrentUser() no lo encuentran y la UI sigue
+          // mostrando "Iniciar sesión" aunque el login fue OK.
+          set((state) => ({
+            currentUserId: user.id,
+            users: state.users.some((u) => u.id === user.id)
+              ? state.users
+              : [...state.users, user],
+          }));
           return { ok: true };
         } catch (error) {
           return {
