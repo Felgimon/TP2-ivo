@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PC Builder
 
-## Getting Started
+Aplicación web para armar una PC eligiendo componentes y viendo el armado en
+3D en tiempo real. Por cada categoría (gabinete, motherboard, CPU, GPU, RAM,
+etc.) el usuario elige una pieza, la ve aparecer dentro del gabinete y el total
+se actualiza al instante. Con sesión iniciada se pueden guardar builds como
+favoritos.
 
-First, run the development server:
+Hecho con Next.js, React, Zustand, react-three-fiber para el 3D y Supabase para
+autenticación y persistencia.
+
+## Producción
+
+La app está deployada en Vercel:
+
+https://tp-2-ivo-git-lola-sabetay-felgimons-projects.vercel.app/
+
+El deploy a producción es automático: lo hace el pipeline de CI/CD cada vez que
+se mergea a `main`, y solo si pasaron lint, tests unitarios, build y tests E2E.
+El detalle del pipeline y de las decisiones de calidad está en
+[CALIDAD.md](./CALIDAD.md).
+
+## Cómo correrlo en local
+
+Requiere Node 20 o superior.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Para que funcionen login y favoritos hace falta configurar Supabase. Copiar
+`.env.local.example` a `.env.local` y completar las variables. Sin esas
+variables la app igual arranca y se puede armar una PC; solo no andan login ni
+guardado. El detalle está comentado dentro de `.env.local.example`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+```bash
+npm run dev            # servidor de desarrollo
+npm run build          # build de producción
+npm run start          # sirve el build de producción
+npm run lint           # ESLint
+npm run test           # tests unitarios (Vitest)
+npm run test:coverage  # tests unitarios con reporte de cobertura
+npm run test:e2e       # tests E2E (Playwright)
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Convención de ramas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ningún cambio se mergea directo a `main`. Todo pasa por una rama y un Pull
+Request que referencia el issue que resuelve (`closes #N`), revisado y aprobado
+por el otro integrante antes de mergear.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Las ramas se nombran según el tipo de trabajo:
 
-## Deploy on Vercel
+```
+feature/<nombre-corto>   nueva funcionalidad   ej: feature/cicd-pipeline
+fix/<nombre-corto>       corrección de bug      ej: fix/login-trim-password
+test/<nombre-corto>      tests                  ej: test/unit-business-logic
+docs/<nombre-corto>      documentación          ej: docs/calidad
+chore/<nombre-corto>     config / mantenimiento ej: chore/pr-template
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tests y calidad
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El proyecto tiene tests unitarios (Vitest) sobre la lógica de negocio y tests
+E2E (Playwright) sobre el flujo principal, que corren en el pipeline de CI antes
+de cada deploy. Todo el razonamiento detrás de la estrategia de testing, las
+herramientas elegidas, los casos de uso priorizados y las limitaciones está
+documentado en [CALIDAD.md](./CALIDAD.md).
