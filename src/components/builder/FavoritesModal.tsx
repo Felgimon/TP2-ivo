@@ -60,7 +60,7 @@ export function FavoritesModal({ open, onClose }: FavoritesModalProps) {
             Todavía no guardaste ningún build.
           </p>
           <p className="text-fg/40 text-xs mt-1">
-            Armá uno y tocá "Guardar" para tenerlo a mano.
+            Armá uno y tocá &quot;Guardar&quot; para tenerlo a mano.
           </p>
         </div>
       ) : (
