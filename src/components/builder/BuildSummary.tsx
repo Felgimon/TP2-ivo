@@ -31,7 +31,7 @@ export function BuildSummary() {
   const hasAnything = filledCount > 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" data-testid="build-summary">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-sm uppercase tracking-wider text-fg/60">
           Tu build
@@ -82,7 +82,10 @@ export function BuildSummary() {
           className="flex items-baseline justify-between mb-3"
         >
           <span className="text-sm text-fg/60">Total</span>
-          <span className="text-2xl font-semibold text-fg">
+          <span
+            className="text-2xl font-semibold text-fg"
+            data-testid="build-total"
+          >
             ${total.toLocaleString()}
           </span>
         </motion.div>
@@ -91,6 +94,7 @@ export function BuildSummary() {
         <div className="flex gap-2">
           <button
             onClick={() => setSaveOpen(true)}
+            data-testid="save-build"
             // Deshabilitado si no hay nada que guardar O si no hay sesión.
             // Si no hay sesión, el título explica por qué no se puede.
             disabled={!hasAnything || !isLoggedIn}
