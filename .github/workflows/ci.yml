@@ -1,0 +1,118 @@
+name: CI/CD
+
+# El pipeline corre en cada push a main y en cada PR que apunte a main.
+# La idea: ningún cambio llega a producción sin pasar antes por lint, tests
+# unitarios, build y tests E2E.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Si llega un push nuevo mientras una corrida vieja sigue, la cancelamos.
+# Evita gastar minutos en commits que ya quedaron pisados.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------
+  # Job 1: CALIDAD
+  # Corre todas las verificaciones en orden. Si cualquiera falla, el job
+  # falla y el deploy (que depende de este job) ni siquiera arranca.
+  # El orden es a propósito: lo más barato y rápido primero (lint), para
+  # cortar temprano y no gastar tiempo buildeando algo que ya sabemos
+  # que está mal.
+  # ------------------------------------------------------------------
+  quality:
+    name: Calidad (lint, tests, build, e2e)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar navegador de Playwright
+        run: npx playwright install --with-deps chromium
+
+      # 1) LINT: chequea estilo y errores estáticos. Si falla, cortamos acá.
+      - name: Lint
+        run: npm run lint
+
+      # 2) TESTS UNITARIOS + COBERTURA: lógica de negocio (stores y catálogo).
+      #    El umbral de cobertura está en vitest.config.ts; si baja, falla.
+      - name: Tests unitarios y cobertura
+        run: npm run test:coverage
+
+      # 3) BUILD: compila la app de producción. Atrapa errores de tipos y de
+      #    compilación que los tests unitarios no ven.
+      - name: Build de producción
+        run: npm run build
+
+      # 4) E2E: levanta el build y prueba el flujo real en un navegador.
+      #    En CI el server solo hace "next start" porque el build ya corrió
+      #    en el paso anterior (ver playwright.config.ts).
+      - name: Tests E2E
+        run: npm run test:e2e
+
+      # Guardamos los reportes aunque algo falle, para poder revisarlos.
+      - name: Guardar reporte E2E
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Guardar reporte de cobertura
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # Job 2: DEPLOY
+  # Solo corre si "quality" pasó (needs) y solo en push a main (no en PRs).
+  # Así garantizamos que producción solo se actualiza con código verificado.
+  # El deploy usa la CLI de Vercel; la auto-deploy por git está desactivada
+  # en vercel.json para que el único camino a producción sea este pipeline.
+  # ------------------------------------------------------------------
+  deploy:
+    name: Deploy a Vercel (producción)
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Traer la configuración de producción de Vercel
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build con Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy a producción
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
