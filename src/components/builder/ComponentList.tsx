@@ -34,6 +34,9 @@ export function ComponentList() {
             return (
               <button
                 key={comp.id}
+                // testid estable para los tests E2E: no depende del texto
+                // visible (marca/nombre), que puede cambiar con el catálogo.
+                data-testid={`option-${comp.id}`}
                 onClick={() =>
                   // Click en el ya seleccionado lo des-selecciona;
                   // click en otro, lo cambia.
