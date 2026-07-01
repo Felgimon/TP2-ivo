@@ -235,6 +235,24 @@ proyecto en Vercel.
 
 Somos honestos con lo que quedó flojo o sin cubrir:
 
+El deploy a producción en Vercel no está funcionando, y es la limitación más
+importante hoy. El pipeline dispara el deploy correctamente (el paso de deploy
+corre, sube el build y le pide a Vercel que lo publique), pero Vercel falla en la
+etapa de provisioning con el error "Resource provisioning failed" (código
+BUILD_FAILED), antes de que empiece el build, por eso no deja logs. Lo
+diagnosticamos con la API de Vercel y confirmamos que la falla es del lado de la
+plataforma, no del workflow: falla igual por el deploy con CLI del pipeline y por
+la integración git de Vercel, mientras que los deploys de preview del mismo código
+sí quedan en estado READY. De hecho, los auto deploys de producción de los primeros
+merges a main fallaron idénticamente, antes incluso de que nuestra config entrara
+en juego. Lo dejamos anotado como riesgo conocido. El pipeline reintenta el deploy
+y se puede volver a ejecutar cuando Vercel recupere el provisioning; como plan B se
+puede promover a producción, desde el dashboard de Vercel, un deploy de preview que
+sí haya quedado en READY. Un factor que probablemente no ayuda es el peso del
+proyecto: los modelos 3D suman 258 MB en `public/`, y aunque el error es de
+provisioning y no de tamaño, aligerarlos (storage externo o compresión) haría los
+deploys más livianos.
+
 La escena 3D no tiene tests. Es una decisión consciente por costo y fragilidad,
 pero significa que una regresión visual (un modelo que carga mal, una cámara que
 se rompe) no la atrapa el pipeline. Lo aceptamos como riesgo porque el error
