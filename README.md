@@ -13,7 +13,7 @@ autenticación y persistencia.
 
 La app está deployada en Vercel:
 
-https://tp-2-ivo-git-lola-sabetay-felgimons-projects.vercel.app/
+https://tp2-ivo-one.vercel.app
 
 El deploy a producción es automático: lo hace el pipeline de CI/CD cada vez que
 se mergea a `main`, y solo si pasaron lint, tests unitarios, build y tests E2E.

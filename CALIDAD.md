@@ -235,23 +235,27 @@ proyecto en Vercel.
 
 Somos honestos con lo que quedó flojo o sin cubrir:
 
-El deploy a producción en Vercel no está funcionando, y es la limitación más
-importante hoy. El pipeline dispara el deploy correctamente (el paso de deploy
-corre, sube el build y le pide a Vercel que lo publique), pero Vercel falla en la
-etapa de provisioning con el error "Resource provisioning failed" (código
-BUILD_FAILED), antes de que empiece el build, por eso no deja logs. Lo
-diagnosticamos con la API de Vercel y confirmamos que la falla es del lado de la
-plataforma, no del workflow: falla igual por el deploy con CLI del pipeline y por
-la integración git de Vercel, mientras que los deploys de preview del mismo código
-sí quedan en estado READY. De hecho, los auto deploys de producción de los primeros
-merges a main fallaron idénticamente, antes incluso de que nuestra config entrara
-en juego. Lo dejamos anotado como riesgo conocido. El pipeline reintenta el deploy
-y se puede volver a ejecutar cuando Vercel recupere el provisioning; como plan B se
-puede promover a producción, desde el dashboard de Vercel, un deploy de preview que
-sí haya quedado en READY. Un factor que probablemente no ayuda es el peso del
-proyecto: los modelos 3D suman 258 MB en `public/`, y aunque el error es de
-provisioning y no de tamaño, aligerarlos (storage externo o compresión) haría los
-deploys más livianos.
+Incidente del deploy a producción (resuelto). El primer día que enchufamos el
+pipeline, el paso de deploy fallaba siempre en Vercel con el error "Resource
+provisioning failed" (código BUILD_FAILED), antes de que arrancara el build, por
+eso no dejaba logs. Nos costó bastante y lo diagnosticamos con la API de Vercel.
+Lo primero que descartamos: no era del pipeline. La falla aparecía igual por el
+deploy con CLI del workflow y por la integración git de Vercel, e incluso los auto
+deploys de producción de los primeros merges a main fallaron idénticos, antes de
+que nuestra config entrara en juego. En cambio, los deploys de preview del mismo
+código quedaban en READY. O sea, el problema era puntual de los deploys de
+producción de ese proyecto de Vercel. Probamos varias cosas que no lo destrabaron:
+reintentar el deploy tres veces, revisar que el dominio estuviera verificado y el
+proyecto no pausado, y bajar la versión de Node del proyecto de 24.x a 22.x. Lo
+que finalmente lo resolvió fue recrear el proyecto en Vercel desde cero: creamos un
+proyecto nuevo, copiamos las variables de entorno del viejo y apuntamos el secret
+`VERCEL_PROJECT_ID` al nuevo. Con ese proyecto limpio, el deploy de producción pasó
+a estado READY y la app quedó publicada. La conclusión que nos llevamos es que el
+proyecto original había quedado con el provisioning de producción roto del lado de
+Vercel, algo que no se arregla desde el código sino recreando el proyecto. Queda
+como deuda un tema aparte: los modelos 3D pesan 258 MB en `public/`, que hace los
+deploys pesados; no fue la causa del incidente (los previews con ese mismo peso
+andaban), pero aligerarlos con storage externo o compresión sería una mejora.
 
 La escena 3D no tiene tests. Es una decisión consciente por costo y fragilidad,
 pero significa que una regresión visual (un modelo que carga mal, una cámara que
